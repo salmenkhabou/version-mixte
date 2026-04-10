@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample Menu Marker - AR Smart Menu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .marker-container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .marker {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            display: block;
+            border: 3px dashed #ddd;
+            padding: 20px;
+            background: white;
+        }
+        .marker svg {
+            width: 100%;
+            height: auto;
+        }
+        .instructions {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #2196F3;
+        }
+        .instructions h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+        .instructions ol {
+            padding-left: 20px;
+            color: #333;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        .print-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 20px auto;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+        .print-btn:hover {
+            opacity: 0.9;
+        }
+        @media print {
+            body { background: white; }
+            .instructions, .print-btn, h1, .subtitle { display: none; }
+            .marker-container { box-shadow: none; padding: 0; }
+            .marker { border: 2px solid #000; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ AR Smart Menu - Sample Marker</h1>
+        <p class="subtitle">Print this marker and place it on your menu or table</p>
+        
+        <div class="marker-container">
+            <div class="marker">
+                <!-- SVG Marker Design -->
+                <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Background -->
+                    <rect width="400" height="400" fill="white"/>
+                    
+                    <!-- Border pattern -->
+                    <rect x="10" y="10" width="380" height="380" fill="none" stroke="#333" stroke-width="8"/>
+                    <rect x="25" y="25" width="350" height="350" fill="none" stroke="#333" stroke-width="3"/>
+                    
+                    <!-- Corner markers -->
+                    <rect x="30" y="30" width="60" height="60" fill="#333"/>
+                    <rect x="310" y="30" width="60" height="60" fill="#333"/>
+                    <rect x="30" y="310" width="60" height="60" fill="#333"/>
+                    
+                    <!-- Unique pattern for tracking -->
+                    <rect x="110" y="50" width="30" height="30" fill="#333"/>
+                    <rect x="160" y="50" width="50" height="30" fill="#333"/>
+                    <rect x="230" y="50" width="20" height="30" fill="#333"/>
+                    
+                    <rect x="50" y="110" width="30" height="40" fill="#333"/>
+                    <rect x="50" y="170" width="30" height="20" fill="#333"/>
+                    <rect x="50" y="210" width="30" height="50" fill="#333"/>
+                    
+                    <rect x="320" y="110" width="30" height="60" fill="#333"/>
+                    <rect x="320" y="190" width="30" height="30" fill="#333"/>
+                    <rect x="320" y="240" width="30" height="40" fill="#333"/>
+                    
+                    <rect x="110" y="320" width="40" height="30" fill="#333"/>
+                    <rect x="170" y="320" width="60" height="30" fill="#333"/>
+                    <rect x="250" y="320" width="30" height="30" fill="#333"/>
+                    
+                    <!-- Center design -->
+                    <circle cx="200" cy="200" r="70" fill="none" stroke="#f39c12" stroke-width="6"/>
+                    <circle cx="200" cy="200" r="50" fill="none" stroke="#e74c3c" stroke-width="4"/>
+                    
+                    <!-- Fork and knife icon -->
+                    <g transform="translate(160, 160)">
+                        <!-- Fork -->
+                        <path d="M20 0 L20 40 M15 0 L15 25 Q15 30 20 30 M25 0 L25 25 Q25 30 20 30" 
+                              stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <!-- Knife -->
+                        <path d="M60 0 Q55 15 55 25 L55 40 M60 0 L60 40" 
+                              stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    </g>
+                    
+                    <!-- Text -->
+                    <text x="200" y="280" text-anchor="middle" font-family="Arial, sans-serif" 
+                          font-size="18" font-weight="bold" fill="#333">SCAN FOR AR MENU</text>
+                    
+                    <!-- Additional tracking features -->
+                    <rect x="120" y="100" width="15" height="15" fill="#333"/>
+                    <rect x="265" y="100" width="15" height="15" fill="#333"/>
+                    <rect x="100" y="140" width="20" height="10" fill="#333"/>
+                    <rect x="280" y="140" width="20" height="10" fill="#333"/>
+                    
+                    <!-- QR-like corner (bottom right, inverted) -->
+                    <rect x="310" y="310" width="60" height="60" fill="white" stroke="#333" stroke-width="3"/>
+                    <rect x="320" y="320" width="40" height="40" fill="white" stroke="#333" stroke-width="2"/>
+                    <rect x="330" y="330" width="20" height="20" fill="#333"/>
+                </svg>
+            </div>
+        </div>
+        
+        <button class="print-btn" onclick="window.print()">🖨️ Print Marker</button>
+        
+        <div class="instructions">
+            <h3>📋 How to Use This Marker</h3>
+            <ol>
+                <li><strong>Print</strong> this page on white paper (A4 or Letter size)</li>
+                <li><strong>Compile</strong> the marker at <a href="https://hiukim.github.io/mind-ar-js-doc/tools/compile" target="_blank">MindAR Compiler</a></li>
+                <li><strong>Upload</strong> the printed marker image to the compiler</li>
+                <li><strong>Download</strong> the generated <code>.mind</code> file</li>
+                <li><strong>Save</strong> it as <code>targets/targets.mind</code> in your project</li>
+                <li><strong>Place</strong> the printed marker on your menu or table</li>
+                <li><strong>Scan</strong> with the AR Smart Menu app!</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

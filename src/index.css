@@ -1,0 +1,513 @@
+@import "tailwindcss";
+
+/* Theme Variables */
+:root {
+  /* Light Mode Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --accent-color: #d97706;
+  --accent-hover: #b45309;
+  --card-bg: #ffffff;
+  --overlay-bg: rgba(255, 255, 255, 0.95);
+}
+
+.dark {
+  /* Dark Mode Colors */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-tertiary: rgba(255, 255, 255, 0.3);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --accent-color: #f59e0b;
+  --accent-hover: #fbbf24;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --overlay-bg: rgba(0, 0, 0, 0.95);
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Disable transitions on theme toggle to avoid flash */
+.theme-transitioning * {
+  transition: none !important;
+}
+
+/* Modern Keyframes Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Loader Animations */
+@keyframes loadingBar {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 70%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes fadeInAnimation {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDelay {
+  0%, 30% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInSlow {
+  0%, 60% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Animation utilities */
+.animate-loading-bar {
+  animation: loadingBar 2.5s ease-in-out;
+}
+
+.animate-fade-in {
+  animation: fadeInAnimation 0.8s ease-out;
+}
+
+.animate-fade-in-delay {
+  animation: fadeInDelay 1.2s ease-out;
+}
+
+.animate-fade-in-slow {
+  animation: fadeInSlow 2s ease-out;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+/* Global Loader Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceSlow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes steamRise {
+  0% {
+    opacity: 0.8;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(1.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes shimmerFast {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes floatCoffee {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(20px, -20px) rotate(5deg);
+  }
+  50% {
+    transform: translate(0, -40px) rotate(0deg);
+  }
+  75% {
+    transform: translate(-20px, -20px) rotate(-5deg);
+  }
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinSlowReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulseSlow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(30px, -30px);
+  }
+  66% {
+    transform: translate(-20px, 20px);
+  }
+}
+
+@keyframes floatSlowReverse {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(-30px, 30px);
+  }
+  66% {
+    transform: translate(20px, -20px);
+  }
+}
+
+@keyframes steamAnimation1 {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes steamAnimation2 {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes steamAnimation3 {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.animate-bounce-slow {
+  animation: bounceSlow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-shimmer-fast {
+  animation: shimmerFast 1.5s infinite;
+}
+
+.animate-spin-slow {
+  animation: spinSlow 20s linear infinite;
+}
+
+.animate-spin-slow-reverse {
+  animation: spinSlowReverse 20s linear infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 3s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatSlow 8s ease-in-out infinite;
+}
+
+.animate-float-slow-reverse {
+  animation: floatSlowReverse 8s ease-in-out infinite;
+}
+
+.animate-steam-1 {
+  animation: steamAnimation1 2s ease-in-out infinite;
+}
+
+.animate-steam-2 {
+  animation: steamAnimation2 2s ease-in-out infinite 0.3s;
+}
+
+.animate-steam-3 {
+  animation: steamAnimation3 2s ease-in-out infinite 0.6s;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.4s ease-out;
+}
+
+.delay-500 {
+  animation-delay: 0.5s;
+}
+
+/* Steam animation */
+.steam {
+  font-size: 2rem;
+  color: rgba(255, 255, 255, 0.6);
+  animation: steamRise 2s ease-out infinite;
+}
+
+.steam-1 {
+  animation-delay: 0s;
+}
+
+.steam-2 {
+  animation-delay: 0.3s;
+}
+
+.steam-3 {
+  animation-delay: 0.6s;
+}
+
+/* Coffee beans floating */
+.coffee-bean {
+  position: absolute;
+  font-size: 3rem;
+  opacity: 0.15;
+  animation: floatCoffee 8s ease-in-out infinite;
+}
+
+.coffee-bean-1 {
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.coffee-bean-2 {
+  top: 20%;
+  right: 15%;
+  animation-delay: 1s;
+}
+
+.coffee-bean-3 {
+  top: 60%;
+  left: 5%;
+  animation-delay: 2s;
+}
+
+.coffee-bean-4 {
+  bottom: 20%;
+  right: 10%;
+  animation-delay: 3s;
+}
+
+.coffee-bean-5 {
+  top: 40%;
+  right: 5%;
+  animation-delay: 1.5s;
+}
+
+.coffee-bean-6 {
+  bottom: 10%;
+  left: 20%;
+  animation-delay: 2.5s;
+}
+
+/* Particles */
+.particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: particleFloat 10s linear infinite;
+}
+
+.particle-1 {
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.particle-2 {
+  left: 30%;
+  animation-delay: 2s;
+}
+
+.particle-3 {
+  left: 60%;
+  animation-delay: 4s;
+}
+
+.particle-4 {
+  left: 80%;
+  animation-delay: 6s;
+}
+
+/* Arabic font */
+.font-arabic {
+  font-family: 'Cairo', 'Amiri', 'Tajawal', sans-serif;
+}
+
+/* Grid pattern background */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Radial gradient */
+.bg-gradient-radial {
+  background-image: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+/* Tabular numbers for consistent width */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+

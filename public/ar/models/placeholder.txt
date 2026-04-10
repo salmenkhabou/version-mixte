@@ -1,0 +1,20 @@
+/* Placeholder for 3D models */
+/* Add your .glb format 3D models here */
+
+/* Recommended workflow:
+   1. Use Polycam or Scaniverse app to scan real dishes
+   2. Export as .glb format
+   3. Optimize file size (aim for <2MB per model)
+   4. Name files to match menu-data.js modelId references:
+      - burger.glb
+      - pizza.glb
+      - salad.glb
+      - pasta.glb
+      - steak.glb
+      - dessert.glb
+
+   Free 3D model resources:
+   - Sketchfab.com (filter by downloadable, glTF format)
+   - poly.pizza (free low-poly models)
+   - Blender (create your own)
+*/

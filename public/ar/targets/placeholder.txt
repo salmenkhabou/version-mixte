@@ -1,0 +1,11 @@
+/* Placeholder file for demo purposes */
+/* Replace this with actual .mind file generated from MindAR compiler */
+/* Visit: https://hiukim.github.io/mind-ar-js-doc/tools/compile */
+
+/* Instructions:
+   1. Open the sample-marker.html in markers/ folder
+   2. Print or screenshot the marker
+   3. Upload to MindAR compiler at the URL above
+   4. Download the generated .mind file
+   5. Replace this file with the downloaded targets.mind
+*/

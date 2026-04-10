@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>La Palma - AR Menu</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Landing Page -->
+    <div id="landing-page">
+        <div class="container">
+            <div class="logo">
+                <h1>La Palma</h1>
+            </div>
+            <p class="tagline">the taste of time</p>
+            
+            <div id="menu-grid">
+                <!-- Menu items will be loaded dynamically by category -->
+            </div>
+            
+            <button id="start-ar-btn" class="ar-button">
+                <span class="camera-icon">📷</span>
+                View in AR
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loader"></div>
+        <p id="loading-text">Loading AR Experience...</p>
+    </div>
+
+    <script src="shared-data.js"></script>
+    <script src="menu-data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
