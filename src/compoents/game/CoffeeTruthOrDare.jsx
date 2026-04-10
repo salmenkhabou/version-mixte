@@ -5,7 +5,7 @@ import { ArrowLeft, Coffee, Users, RotateCcw, Crown, Heart, Zap, AlertTriangle, 
 
 import { truthQuestions, dareActions, playerRoles } from "../../data/truthOrDareData"
 
-export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBeans, setCoffeeBeans }) {
+export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBeans, setCoffeeBeans, isDarkMode }) {
     const [gameState, setGameState] = useState("setup") // "setup" | "spinning" | "playing" | "finished"
     const [players, setPlayers] = useState([])
     const [newPlayerName, setNewPlayerName] = useState("")
@@ -182,7 +182,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                 <Card className="bg-white rounded-3xl shadow-2xl max-w-md w-full">
                     <CardContent className={`${isMobile ? 'p-6' : 'p-8'} text-center`}>
-                        <div className={`${isMobile ? 'text-5xl mb-4' : 'text-6xl mb-6'}`}>🔞</div>
+                        <AlertTriangle className={`${isMobile ? 'w-12 h-12 mb-4' : 'w-14 h-14 mb-6'} mx-auto text-red-500`} />
                         <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-[#2f2d2c] mb-4`}>Adult Content Warning - 18+ ONLY</h2>
                         <p className={`text-[#9b9b9b] mb-4 ${isMobile ? 'text-sm' : 'text-base'}`}>
                             This game contains <strong>EXPLICIT ADULT CONTENT</strong> with mature sexual themes.
@@ -195,7 +195,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
                                 onClick={enableAdultContent} 
                                 className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-xl py-3 px-4 font-medium transition-colors"
                             >
-                                🔥 I'm 18+ - Let's Play!
+                                I'm 18+ - Let's Play
                             </button>
                             <button
                                 onClick={() => setCurrentGame("menu")}
@@ -214,8 +214,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
     if (gameState === "setup") {
         return (
             <div
-                className={`bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 ${isMobile ? "rounded-t-[32px] mt-12 px-4 pt-6 pb-8" : "px-8 pt-12 pb-12"
-                    } min-h-screen relative`}
+                className={`min-h-screen ${isMobile ? "mt-12 px-4 pt-6 pb-8" : "px-8 pt-12 pb-12"} relative transition-colors duration-300 ${isDarkMode ? 'bg-black' : 'bg-white'}`}
             >
                 {/* Header */}
                 <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row items-center justify-between'} mb-6`}>
@@ -228,7 +227,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
                         </button>
                         <div className="flex-1">
                             <h1 className={`font-bold text-[#2f2d2c] ${isMobile ? "text-xl leading-tight" : "text-4xl"} mb-1`}>
-                                🔥 لعبة صراحة أو جرأة - نسخة ساخنة جداً 🔥
+                                لعبة صراحة أو جرأة - نسخة ساخنة
                             </h1>
                             <p className={`text-red-600 font-semibold ${isMobile ? 'text-sm' : 'text-base'}`}>18+ للبالغين فقط - محتوى جريء</p>
                         </div>
@@ -324,7 +323,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
                             <div className={`${isMobile ? 'mb-4' : 'mb-6'}`}>
                                 <div className="bg-red-50 border-2 border-red-200 rounded-xl p-3">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className="text-2xl">🔞</span>
+                                        <AlertTriangle className="w-5 h-5 text-red-600" />
                                         <p className="text-sm font-bold text-red-600">محتوى للبالغين فقط</p>
                                     </div>
                                     <p className={`text-red-700 ${isMobile ? 'text-xs' : 'text-sm'}`}>
@@ -413,9 +412,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
                         </div>
                         <div className={`mt-3 ${isMobile ? 'p-3' : 'p-4'} bg-red-50 rounded-lg border-2 border-red-300`}>
                             <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-red-700 font-semibold text-center`}>
-                                <span className="text-xl mr-2">🔥</span>
                                 <strong>Warning:</strong> This game contains VERY HOT & EXPLICIT adult content! 18+ only.
-                                <span className="text-xl ml-2">🔥</span>
                             </p>
                         </div>
                     </CardContent>
@@ -428,8 +425,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
     if (gameState === "spinning") {
         return (
             <div
-                className={`bg-gradient-to-br from-purple-50 via-pink-50 to-red-50 ${isMobile ? "rounded-t-[32px] mt-12 px-4 pt-6 pb-8" : "px-8 pt-12 pb-12"
-                    } min-h-screen relative`}
+                className={`min-h-screen ${isMobile ? "mt-12 px-4 pt-6 pb-8" : "px-8 pt-12 pb-12"} relative transition-colors duration-300 ${isDarkMode ? 'bg-black' : 'bg-white'}`}
             >
                 {/* Header */}
                 <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row items-center justify-between'} mb-6`}>
@@ -541,8 +537,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
     if (gameState === "playing" && selectedPlayer) {
         return (
             <div
-                className={`bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 ${isMobile ? "rounded-t-[32px] mt-12 px-4 pt-6 pb-8" : "px-8 pt-12 pb-12"
-                    } min-h-screen relative`}
+                className={`min-h-screen ${isMobile ? "mt-12 px-4 pt-6 pb-8" : "px-8 pt-12 pb-12"} relative transition-colors duration-300 ${isDarkMode ? 'bg-black' : 'bg-white'}`}
             >
                 {/* Header */}
                 <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row items-center justify-between'} mb-6`}>
@@ -631,7 +626,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
                         >
                             <CardContent className={`${isMobile ? 'p-4' : 'p-8'} text-center`}>
                                 <div className={`${isMobile ? 'text-4xl mb-3' : 'text-6xl mb-4'}`}>
-                                    {currentQuestion.isAdult ? "🔞" : currentQuestion.type === "truth" ? "💭" : "⚡"}
+                                    {currentQuestion.isAdult ? "18+" : currentQuestion.type === "truth" ? "Truth" : "Dare"}
                                 </div>
                                 <div className={`flex flex-wrap justify-center gap-2 mb-4`}>
                                     <span
@@ -666,13 +661,13 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
                                         onClick={() => completeChallenge(true)}
                                         className={`bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-xl font-bold transition-all active:scale-95 ${isMobile ? 'py-3 px-6 text-base' : 'px-8 py-3 text-lg'}`}
                                     >
-                                        ✅ Completed
+                                        Completed
                                     </button>
                                     <button
                                         onClick={() => completeChallenge(false)}
                                         className={`border-2 border-red-300 text-red-600 hover:bg-red-50 active:bg-red-100 rounded-xl font-bold transition-all active:scale-95 ${isMobile ? 'py-3 px-6 text-base' : 'px-8 py-3 text-lg'}`}
                                     >
-                                        ❌ Skip
+                                        Skip
                                     </button>
                                 </div>
                             </CardContent>
@@ -684,7 +679,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
                 {currentQuestion && (
                     <div className="mb-4 text-center">
                         <span className={`inline-block bg-green-500 text-white rounded-full font-semibold ${isMobile ? 'text-sm px-3 py-2' : 'text-lg px-4 py-2'}`}>
-                            🎯 Complete this challenge to earn {currentQuestion.points} points!
+                            Complete this challenge to earn {currentQuestion.points} points
                         </span>
                     </div>
                 )}
@@ -694,7 +689,6 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
                     <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none px-4">
                         <div className={`bg-green-500 text-white rounded-3xl shadow-2xl animate-bounce ${isMobile ? 'px-6 py-3' : 'px-8 py-4'}`}>
                             <div className="text-center">
-                                <div className={`${isMobile ? 'text-3xl mb-1' : 'text-4xl mb-2'}`}>🎉</div>
                                 <p className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>{showPointsAnimation.player}</p>
                                 <p className={`${isMobile ? 'text-base' : 'text-lg'}`}>+{showPointsAnimation.points} نقطة!</p>
                             </div>
@@ -741,8 +735,7 @@ export default function CoffeeTruthOrDare({ isMobile, setCurrentGame, coffeeBean
 
         return (
             <div
-                className={`bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 ${isMobile ? "rounded-t-[32px] mt-12 px-4 pt-6 pb-8" : "px-8 pt-12 pb-12"
-                    } min-h-screen relative`}
+                className={`min-h-screen ${isMobile ? "mt-12 px-4 pt-6 pb-8" : "px-8 pt-12 pb-12"} relative transition-colors duration-300 ${isDarkMode ? 'bg-black' : 'bg-white'}`}
             >
                 {/* Header */}
                 <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row items-center justify-between'} mb-6`}>

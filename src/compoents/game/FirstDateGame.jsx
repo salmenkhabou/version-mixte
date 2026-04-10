@@ -2,9 +2,55 @@ import { useState, useEffect, useRef } from "react"
 import { Card, CardContent } from "../ui/card"
 import { ArrowLeft, Heart, Sparkles, Clock, Zap, MessageCircle, Star, Camera, Download, X, Volume2, VolumeX } from "lucide-react"
 import { dateScenarios, intimacyLevels } from "../../data/firstDateData"
+import { useLanguage } from "../../contexts/LanguageContext"
 
 
-export default function FirstDateGame({ isMobile, setCurrentGame }) {
+export default function FirstDateGame({ isMobile, setCurrentGame, isDarkMode }) {
+    const { language } = useLanguage()
+    const texts = {
+        ar: {
+            title: "لعبة الموعد الأول",
+            preparing: "جاري تحضير لحظات رومانسية...",
+            ready: "استعدوا لأجمل اللحظات معاً",
+            level: "اختر مستوى التقارب",
+            scenario: "اختر السيناريو",
+            startDate: "ابدأ الموعد",
+            back: "العودة",
+            finishDate: "إنهاء الموعد",
+            deepQuestion: "سؤال عميق",
+            romanticChallenge: "تحدي رومانسي",
+            takePhoto: "صورة معاً",
+        },
+        fr: {
+            title: "Jeu du Premier Rendez-vous",
+            preparing: "Preparation des moments romantiques...",
+            ready: "Preparez-vous pour de beaux moments",
+            level: "Choisir le niveau de proximite",
+            scenario: "Choisir le scenario",
+            startDate: "Commencer",
+            back: "Retour",
+            finishDate: "Terminer",
+            deepQuestion: "Question profonde",
+            romanticChallenge: "Defi romantique",
+            takePhoto: "Prendre une photo",
+        },
+        en: {
+            title: "First Date Game",
+            preparing: "Preparing romantic moments...",
+            ready: "Get ready for beautiful moments",
+            level: "Choose intimacy level",
+            scenario: "Choose scenario",
+            startDate: "Start Date",
+            back: "Back",
+            finishDate: "End Date",
+            deepQuestion: "Deep Question",
+            romanticChallenge: "Romantic Challenge",
+            takePhoto: "Take Photo",
+        },
+    }
+    const t = (key) => texts[language]?.[key] || texts.ar[key]
+    const l = (ar, fr, en) => (language === "fr" ? fr : language === "en" ? en : ar)
+
     const [isLoading, setIsLoading] = useState(true)
     const [gameState, setGameState] = useState("menu") // "menu" | "scenario" | "playing" | "question" | "dare" | "camera"
     const [selectedScenario, setSelectedScenario] = useState(null)
@@ -93,7 +139,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
         }
 
         const utterance = new SpeechSynthesisUtterance(text)
-        utterance.lang = 'ar-SA' // Arabic
+        utterance.lang = language === "fr" ? "fr-FR" : language === "en" ? "en-US" : "ar-SA"
         utterance.rate = 0.9 // Slightly slower for clarity
         utterance.pitch = 1
         utterance.volume = 1
@@ -214,7 +260,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
         try {
             // Check if getUserMedia is supported
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert("متصفحك لا يدعم الوصول إلى الكاميرا")
+                alert(l("متصفحك لا يدعم الوصول إلى الكاميرا", "Votre navigateur ne prend pas en charge l'acces a la camera", "Your browser does not support camera access"))
                 return
             }
 
@@ -242,14 +288,14 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
             }, 100)
         } catch (err) {
             console.error("Error accessing camera:", err)
-            let errorMessage = "لا يمكن الوصول إلى الكاميرا. "
+            let errorMessage = l("لا يمكن الوصول إلى الكاميرا. ", "Impossible d'acceder a la camera. ", "Cannot access the camera. ")
             
             if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                errorMessage += "يرجى السماح للمتصفح باستخدام الكاميرا."
+                errorMessage += l("يرجى السماح للمتصفح باستخدام الكاميرا.", "Veuillez autoriser le navigateur a utiliser la camera.", "Please allow the browser to use the camera.")
             } else if (err.name === 'NotFoundError') {
-                errorMessage += "لم يتم العثور على كاميرا."
+                errorMessage += l("لم يتم العثور على كاميرا.", "Aucune camera trouvee.", "No camera was found.")
             } else {
-                errorMessage += "تأكد من إعطاء الإذن للمتصفح."
+                errorMessage += l("تأكد من إعطاء الإذن للمتصفح.", "Assurez-vous d'avoir accorde l'autorisation.", "Make sure camera permission is granted.")
             }
             
             alert(errorMessage)
@@ -278,7 +324,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
         
         if (!canvas || !video) {
             console.error("Canvas or video not available")
-            alert("الكاميرا غير جاهزة بعد")
+            alert(l("الكاميرا غير جاهزة بعد", "La camera n'est pas encore prete", "Camera is not ready yet"))
             return
         }
 
@@ -286,7 +332,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
         console.log("Video dimensions:", video.videoWidth, "x", video.videoHeight)
 
         if (video.readyState < video.HAVE_CURRENT_DATA) {
-            alert("انتظر قليلاً حتى تصبح الكاميرا جاهزة...")
+            alert(l("انتظر قليلاً حتى تصبح الكاميرا جاهزة...", "Attendez un peu que la camera soit prete...", "Please wait a bit for the camera to be ready..."))
             return
         }
 
@@ -313,18 +359,12 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
             ctx.fillStyle = 'rgba(255, 192, 203, 0.1)'
             ctx.fillRect(0, 0, scaledWidth, scaledHeight)
             
-            // Add heart watermark (scaled)
-            const heartSize = Math.floor(60 * scale)
-            ctx.font = `bold ${heartSize}px Arial`
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'
-            ctx.fillText('❤️', scaledWidth - (80 * scale), 70 * scale)
-            
             // Add text overlay (scaled)
             const textSize = Math.floor(20 * scale)
             ctx.font = `bold ${textSize}px Arial`
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
             ctx.textAlign = 'center'
-            ctx.fillText('💕 لحظة حب 💕', scaledWidth / 2, scaledHeight - (30 * scale))
+            ctx.fillText(l('لحظة خاصة', 'Moment special', 'Special moment'), scaledWidth / 2, scaledHeight - (30 * scale))
             
             // Convert to JPEG with quality 0.7 to reduce size
             const photoData = canvas.toDataURL('image/jpeg', 0.7)
@@ -333,8 +373,8 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
             const newPhoto = { 
                 id: Date.now(), 
                 data: photoData,
-                scenario: selectedScenario?.title || 'موعد رومانسي',
-                timestamp: new Date().toLocaleString('ar-TN', { 
+                scenario: selectedScenario?.title || l('موعد رومانسي', 'Rendez-vous romantique', 'Romantic date'),
+                timestamp: new Date().toLocaleString(language === "fr" ? 'fr-FR' : language === "en" ? 'en-US' : 'ar-TN', { 
                     year: 'numeric', 
                     month: 'short', 
                     day: 'numeric',
@@ -379,7 +419,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
             
         } catch (err) {
             console.error("Error capturing photo:", err)
-            alert("حدث خطأ أثناء التقاط الصورة: " + err.message)
+            alert(l("حدث خطأ أثناء التقاط الصورة: ", "Erreur lors de la capture: ", "Error while capturing photo: ") + err.message)
         }
     }
 
@@ -395,7 +435,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
     }
 
     const clearAllPhotos = () => {
-        if (confirm("هل أنت متأكد من حذف جميع الصور؟")) {
+        if (confirm(l("هل أنت متأكد من حذف جميع الصور؟", "Voulez-vous vraiment supprimer toutes les photos ?", "Are you sure you want to delete all photos?"))) {
             setCapturedPhotos([])
             localStorage.removeItem('firstDatePhotos')
         }
@@ -403,33 +443,25 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
 
     return (
         <div
-            className={`min-h-screen bg-gradient-to-br from-pink-500 via-rose-500 to-red-500 ${isMobile ? "px-4 py-6" : "px-8 py-12"
+            className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-black' : 'bg-white'} ${isMobile ? "px-4 py-6" : "px-8 py-12"
                 }`}
         >
             {/* Loader */}
             {isLoading && (
-                <div className="fixed inset-0 bg-gradient-to-br from-pink-500 via-rose-500 to-red-500 z-50 flex items-center justify-center">
+                <div className={`fixed inset-0 z-50 flex items-center justify-center ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
                     <div className="text-center">
-                        {/* Animated hearts */}
-                        <div className="relative mb-8">
-                            <div className="text-8xl md:text-9xl animate-pulse">💕</div>
-                            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-                                <div className="text-6xl md:text-7xl animate-ping opacity-75">❤️</div>
-                            </div>
-                            <div className="absolute -top-4 -right-4 text-3xl md:text-4xl animate-bounce">💖</div>
-                            <div className="absolute -bottom-4 -left-4 text-3xl md:text-4xl animate-bounce delay-100">💗</div>
-                            <div className="absolute top-0 -left-8 text-2xl md:text-3xl animate-pulse delay-200">💝</div>
-                            <div className="absolute top-0 -right-8 text-2xl md:text-3xl animate-pulse delay-300">💓</div>
+                        <div className="relative mb-8 flex justify-center">
+                            <Heart className="w-20 h-20 md:w-24 md:h-24 text-amber-500 animate-pulse" strokeWidth={1.5} />
                         </div>
 
                         {/* Title */}
-                        <h1 className={`font-bold text-white ${isMobile ? "text-3xl" : "text-5xl"} mb-4 drop-shadow-lg animate-fade-in`}>
-                            💕 لعبة الموعد الأول
+                        <h1 className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'} ${isMobile ? "text-3xl" : "text-5xl"} mb-4 drop-shadow-lg animate-fade-in`}>
+                            {t("title")}
                         </h1>
                         
                         {/* Subtitle */}
-                        <p className="text-white/90 text-lg md:text-xl mb-8 animate-fade-in-delay">
-                            جاري تحضير لحظات رومانسية...
+                        <p className={`${isDarkMode ? 'text-white/80' : 'text-black/70'} text-lg md:text-xl mb-8 animate-fade-in-delay`}>
+                            {t("preparing")}
                         </p>
 
                         {/* Loading bar */}
@@ -445,8 +477,8 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                         </div>
 
                         {/* Romantic messages */}
-                        <div className="mt-8 text-pink-100 text-sm md:text-base animate-fade-in-slow">
-                            <p className="animate-pulse">✨ استعدوا لأجمل اللحظات معاً ✨</p>
+                        <div className={`mt-8 text-sm md:text-base animate-fade-in-slow ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>
+                            <p className="animate-pulse">{t("ready")}</p>
                         </div>
                     </div>
                 </div>
@@ -466,12 +498,12 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                 </button>
                 <div className="text-center flex-1">
                     <h1
-                        className={`font-bold text-white drop-shadow-lg ${isMobile ? "text-xl leading-tight" : "text-4xl mb-2"}`}
+                        className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'} drop-shadow-lg ${isMobile ? "text-xl leading-tight" : "text-4xl mb-2"}`}
                     >
-                        💕 لعبة الموعد الأول
+                        {t("title")}
                     </h1>
                     {!isMobile && (
-                        <p className="text-pink-100 drop-shadow text-sm md:text-base">اكتشفا بعضكما البعض في أجواء رومانسية</p>
+                        <p className="text-pink-100 drop-shadow text-sm md:text-base">{l("اكتشفا بعضكما البعض في أجواء رومانسية", "Decouvrez-vous dans une ambiance romantique", "Discover each other in a romantic atmosphere")}</p>
                     )}
                 </div>
                 <div className={`${isMobile ? 'w-8' : 'w-12'}`}></div>
@@ -483,7 +515,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                     {/* Level select */}
                     <div className={`${isMobile ? 'mb-5' : 'mb-8'}`}>
                         <h2 className={`font-bold text-white text-center drop-shadow-lg ${isMobile ? 'text-lg mb-3' : 'text-2xl md:text-3xl mb-6'}`}>
-                            ✨ اختر مستوى التقارب
+                            {t("level")}
                         </h2>
                         <div className={`grid ${isMobile ? 'grid-cols-2 gap-2.5' : 'grid-cols-2 md:grid-cols-4 gap-4'}`}>
                             {intimacyLevels.map((level, i) => (
@@ -500,7 +532,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                         <p className={`font-bold leading-tight ${isMobile ? 'text-xs mb-0.5' : 'text-sm mb-1'}`}>{level.name}</p>
                                         {selectedLevel === i && (
                                             <div className={`${isMobile ? 'mt-1' : 'mt-2'}`}>
-                                                <span className={`bg-white/30 rounded-full inline-block ${isMobile ? 'text-[9px] px-2 py-0.5' : 'text-xs px-2 py-1'}`}>✓ محدد</span>
+                                                <span className={`bg-white/30 rounded-full inline-block ${isMobile ? 'text-[9px] px-2 py-0.5' : 'text-xs px-2 py-1'}`}>{l("✓ محدد", "✓ Selectionne", "✓ Selected")}</span>
                                             </div>
                                         )}
                                     </CardContent>
@@ -511,7 +543,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
 
                     {/* Scenario select */}
                     <h2 className={`font-bold text-white text-center drop-shadow-lg ${isMobile ? 'text-xl mb-4' : 'text-2xl md:text-3xl mb-6'}`}>
-                        💫 اختر السيناريو
+                        {t("scenario")}
                     </h2>
                     <div className={`grid grid-cols-2 lg:grid-cols-3 ${isMobile ? 'gap-3' : 'gap-6'}`}>
                         {dateScenarios.map((s) => (
@@ -541,7 +573,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                     </div>
                                     {!isMobile && (
                                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-3">
-                                            <span className="text-pink-600 font-bold text-sm">اضغط للبدء ←</span>
+                                            <span className="text-pink-600 font-bold text-sm">{l("اضغط للبدء ←", "Cliquez pour commencer ←", "Click to start ←")}</span>
                                         </div>
                                     )}
                                 </CardContent>
@@ -580,24 +612,24 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                 <div className={`bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl text-center border-2 border-blue-200 flex flex-col items-center justify-center ${isMobile ? 'p-3 min-h-[130px]' : 'p-6 min-h-[160px]'}`}>
                                     <Heart className={`mx-auto text-blue-600 ${isMobile ? 'w-7 h-7 mb-2' : 'w-10 h-10 mb-3'}`} />
                                     <p className={`font-bold text-blue-600 ${isMobile ? 'text-2xl mb-1' : 'text-3xl mb-1'}`}>{selectedScenario.questions.length}</p>
-                                    <p className={`text-gray-600 font-semibold leading-tight ${isMobile ? 'text-xs mb-1' : 'text-sm mb-1'}`}>أسئلة عميقة</p>
-                                    <p className={`text-gray-500 leading-tight ${isMobile ? 'text-[11px]' : 'text-xs'}`}>لاكتشاف بعضكما</p>
+                                    <p className={`text-gray-600 font-semibold leading-tight ${isMobile ? 'text-xs mb-1' : 'text-sm mb-1'}`}>{l("أسئلة عميقة", "Questions profondes", "Deep questions")}</p>
+                                    <p className={`text-gray-500 leading-tight ${isMobile ? 'text-[11px]' : 'text-xs'}`}>{l("لاكتشاف بعضكما", "Pour mieux vous decouvrir", "To discover each other")}</p>
                                 </div>
                                 <div className={`bg-gradient-to-br from-pink-50 to-red-50 rounded-xl text-center border-2 border-pink-200 flex flex-col items-center justify-center ${isMobile ? 'p-3 min-h-[130px]' : 'p-6 min-h-[160px]'}`}>
                                     <Sparkles className={`mx-auto text-pink-600 ${isMobile ? 'w-7 h-7 mb-2' : 'w-10 h-10 mb-3'}`} />
                                     <p className={`font-bold text-pink-600 ${isMobile ? 'text-2xl mb-1' : 'text-3xl mb-1'}`}>{selectedScenario.dares.length}</p>
-                                    <p className={`text-gray-600 font-semibold leading-tight ${isMobile ? 'text-xs mb-1' : 'text-sm mb-1'}`}>تحديات رومانسية</p>
-                                    <p className={`text-gray-500 leading-tight ${isMobile ? 'text-[11px]' : 'text-xs'}`}>لحظات لا تنسى</p>
+                                    <p className={`text-gray-600 font-semibold leading-tight ${isMobile ? 'text-xs mb-1' : 'text-sm mb-1'}`}>{l("تحديات رومانسية", "Defis romantiques", "Romantic challenges")}</p>
+                                    <p className={`text-gray-500 leading-tight ${isMobile ? 'text-[11px]' : 'text-xs'}`}>{l("لحظات لا تنسى", "Moments inoubliables", "Unforgettable moments")}</p>
                                 </div>
                             </div>
 
                             {/* Instructions */}
                             <div className={`bg-yellow-50 border-l-4 border-yellow-400 rounded-r-xl ${isMobile ? 'p-3 mb-6' : 'p-4 mb-8'}`}>
-                                <p className={`font-semibold text-yellow-800 ${isMobile ? 'text-sm mb-1' : 'mb-2'}`}>💡 كيف تلعبون؟</p>
+                                <p className={`font-semibold text-yellow-800 ${isMobile ? 'text-sm mb-1' : 'mb-2'}`}>{l("كيف تلعبون؟", "Comment jouer ?", "How to play?")}</p>
                                 <ul className={`text-yellow-700 space-y-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                                    <li>• اختاروا بين الأسئلة العميقة أو التحديات الرومانسية</li>
-                                    <li>• أجيبوا بصدق وانفتاح لتقوية الرابطة بينكما</li>
-                                    <li>• استمتعوا باللحظات واصنعوا ذكريات جميلة</li>
+                                    <li>{l("• اختاروا بين الأسئلة العميقة أو التحديات الرومانسية", "• Choisissez entre questions profondes et defis romantiques", "• Choose between deep questions and romantic challenges")}</li>
+                                    <li>{l("• أجيبوا بصدق وانفتاح لتقوية الرابطة بينكما", "• Repondez avec sincerite et ouverture", "• Answer with honesty and openness")}</li>
+                                    <li>{l("• استمتعوا باللحظات واصنعوا ذكريات جميلة", "• Profitez des moments et creez de beaux souvenirs", "• Enjoy the moments and create beautiful memories")}</li>
                                 </ul>
                             </div>
 
@@ -607,13 +639,13 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                     onClick={startGame}
                                     className={`bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 ${isMobile ? 'flex-none px-6 py-3 text-base' : 'flex-1 px-8 py-4 text-lg'}`}
                                 >
-                                    ❤️ ابدأ الموعد
+                                    {t("startDate")}
                                 </button>
                                 <button
                                     onClick={() => setGameState("menu")}
                                     className={`bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl transition-all duration-300 ${isMobile ? 'flex-none px-6 py-3 text-base' : 'px-8 py-4'}`}
                                 >
-                                    ← العودة
+                                    ← {t("back")}
                                 </button>
                             </div>
                         </CardContent>
@@ -653,11 +685,11 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                         <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                                         <div className="relative flex flex-col items-center justify-center w-full flex-1">
                                             <MessageCircle className={`mb-2 flex-shrink-0 ${isMobile ? 'w-7 h-7' : 'w-10 h-10'}`} />
-                                            <h3 className={`font-bold leading-tight text-center w-full ${isMobile ? 'text-[11px] mb-1' : 'text-xl mb-1'}`}>سؤال عميق</h3>
-                                            <p className={`text-white/90 text-center leading-tight w-full ${isMobile ? 'text-[9px] mb-2' : 'text-sm mb-3'}`}>اكتشفوا بعضكما أكثر</p>
+                                            <h3 className={`font-bold leading-tight text-center w-full ${isMobile ? 'text-[11px] mb-1' : 'text-xl mb-1'}`}>{t("deepQuestion")}</h3>
+                                            <p className={`text-white/90 text-center leading-tight w-full ${isMobile ? 'text-[9px] mb-2' : 'text-sm mb-3'}`}>{language === "ar" ? "اكتشفوا بعضكما أكثر" : language === "fr" ? "Decouvrez-vous davantage" : "Discover each other more"}</p>
                                             <div className={`flex items-center justify-center gap-1 mt-auto ${isMobile ? 'text-[8px]' : 'text-xs'}`}>
                                                 <Clock className={`flex-shrink-0 ${isMobile ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
-                                                <span className="whitespace-nowrap">{isMobile ? '2 دقيقة' : 'دقيقتين للإجابة'}</span>
+                                                <span className="whitespace-nowrap">{isMobile ? l('2 دقيقة', '2 min', '2 min') : l('دقيقتين للإجابة', '2 min pour repondre', '2 minutes to answer')}</span>
                                             </div>
                                         </div>
                                     </button>
@@ -669,11 +701,11 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                         <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                                         <div className="relative flex flex-col items-center justify-center w-full flex-1">
                                             <Sparkles className={`mb-2 flex-shrink-0 ${isMobile ? 'w-7 h-7' : 'w-10 h-10'}`} />
-                                            <h3 className={`font-bold leading-tight text-center w-full ${isMobile ? 'text-[11px] mb-1' : 'text-xl mb-1'}`}>تحدي رومانسي</h3>
-                                            <p className={`text-white/90 text-center leading-tight w-full ${isMobile ? 'text-[9px] mb-2' : 'text-sm mb-3'}`}>لحظات لا تنسى</p>
+                                            <h3 className={`font-bold leading-tight text-center w-full ${isMobile ? 'text-[11px] mb-1' : 'text-xl mb-1'}`}>{t("romanticChallenge")}</h3>
+                                            <p className={`text-white/90 text-center leading-tight w-full ${isMobile ? 'text-[9px] mb-2' : 'text-sm mb-3'}`}>{l("لحظات لا تنسى", "Moments inoubliables", "Unforgettable moments")}</p>
                                             <div className={`flex items-center justify-center gap-1 mt-auto ${isMobile ? 'text-[8px]' : 'text-xs'}`}>
                                                 <Zap className={`flex-shrink-0 ${isMobile ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
-                                                <span className="whitespace-nowrap">{isMobile ? '5 دقائق' : '5 دقائق للتحدي'}</span>
+                                                <span className="whitespace-nowrap">{isMobile ? l('5 دقائق', '5 min', '5 min') : l('5 دقائق للتحدي', '5 min pour le defi', '5 minutes for challenge')}</span>
                                             </div>
                                         </div>
                                     </button>
@@ -688,11 +720,11 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                         <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                                         <div className="relative flex flex-col items-center justify-center w-full flex-1">
                                             <Camera className={`mb-2 flex-shrink-0 ${isMobile ? 'w-7 h-7' : 'w-10 h-10'}`} />
-                                            <h3 className={`font-bold leading-tight text-center w-full ${isMobile ? 'text-[11px] mb-1' : 'text-xl mb-1'}`}>صورة معاً</h3>
-                                            <p className={`text-white/90 text-center leading-tight w-full ${isMobile ? 'text-[9px] mb-2' : 'text-sm mb-3'}`}>احفظوا هذه اللحظة</p>
+                                            <h3 className={`font-bold leading-tight text-center w-full ${isMobile ? 'text-[11px] mb-1' : 'text-xl mb-1'}`}>{t("takePhoto")}</h3>
+                                            <p className={`text-white/90 text-center leading-tight w-full ${isMobile ? 'text-[9px] mb-2' : 'text-sm mb-3'}`}>{l("احفظوا هذه اللحظة", "Gardez ce moment", "Save this moment")}</p>
                                             <div className={`flex items-center justify-center gap-1 mt-auto ${isMobile ? 'text-[8px]' : 'text-xs'}`}>
                                                 <Heart className={`animate-pulse flex-shrink-0 ${isMobile ? 'w-2.5 h-2.5' : 'w-3 h-3'}`} />
-                                                <span className="whitespace-nowrap">{capturedPhotos.length} {isMobile ? '' : 'صور'}</span>
+                                                <span className="whitespace-nowrap">{capturedPhotos.length} {isMobile ? '' : l('صور', 'photos', 'photos')}</span>
                                             </div>
                                         </div>
                                     </button>
@@ -702,7 +734,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                             {/* Progress */}
                             <div className={`bg-gray-100 rounded-xl mb-6 ${isMobile ? 'p-3' : 'p-4'}`}>
                                 <div className={`flex justify-between items-center ${isMobile ? 'mb-1.5' : 'mb-2'}`}>
-                                    <span className={`font-semibold text-gray-700 ${isMobile ? 'text-xs' : 'text-sm'}`}>التقدم في الموعد</span>
+                                    <span className={`font-semibold text-gray-700 ${isMobile ? 'text-xs' : 'text-sm'}`}>{l('التقدم في الموعد', 'Progression du rendez-vous', 'Date progress')}</span>
                                     <span className={`text-gray-500 ${isMobile ? 'text-xs' : 'text-sm'}`}>
                                         {usedQuestions.length + usedDares.length} / {selectedScenario?.questions.length + selectedScenario?.dares.length}
                                     </span>
@@ -722,12 +754,12 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                 <div className={`bg-blue-50 rounded-xl text-center ${isMobile ? 'p-3' : 'p-4'}`}>
                                     <MessageCircle className={`mx-auto text-blue-600 ${isMobile ? 'w-5 h-5 mb-1.5' : 'w-6 h-6 mb-2'}`} />
                                     <p className={`font-bold text-blue-600 ${isMobile ? 'text-xl' : 'text-2xl'}`}>{usedQuestions.length}</p>
-                                    <p className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>أسئلة مجابة</p>
+                                    <p className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>{l('أسئلة مجابة', 'Questions repondues', 'Answered questions')}</p>
                                 </div>
                                 <div className={`bg-pink-50 rounded-xl text-center ${isMobile ? 'p-3' : 'p-4'}`}>
                                     <Sparkles className={`mx-auto text-pink-600 ${isMobile ? 'w-5 h-5 mb-1.5' : 'w-6 h-6 mb-2'}`} />
                                     <p className={`font-bold text-pink-600 ${isMobile ? 'text-xl' : 'text-2xl'}`}>{usedDares.length}</p>
-                                    <p className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>تحديات منجزة</p>
+                                    <p className={`text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>{l('تحديات منجزة', 'Defis accomplis', 'Completed challenges')}</p>
                                 </div>
                             </div>
 
@@ -736,7 +768,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                 onClick={resetGame}
                                 className={`w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl transition-all duration-300 ${isMobile ? 'py-2.5 text-sm' : 'py-3 text-base'}`}
                             >
-                                إنهاء الموعد
+                                {t("finishDate")}
                             </button>
                         </CardContent>
                     </Card>
@@ -752,7 +784,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                             <div className={`text-center ${isMobile ? 'mb-6' : 'mb-8'}`}>
                                 <div className={`inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full ${isMobile ? 'px-4 py-2 mb-3' : 'px-6 py-3 mb-4'}`}>
                                     <MessageCircle className={`inline mr-2 ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
-                                    <span className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>سؤال عميق</span>
+                                    <span className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>{t("deepQuestion")}</span>
                                 </div>
                                 
                                 {/* Audio controls */}
@@ -764,11 +796,11 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                                 ? 'bg-green-100 text-green-700 hover:bg-green-200' 
                                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
-                                        title={autoRead ? "تعطيل القراءة التلقائية" : "تفعيل القراءة التلقائية"}
+                                        title={autoRead ? l("تعطيل القراءة التلقائية", "Desactiver la lecture auto", "Disable auto read") : l("تفعيل القراءة التلقائية", "Activer la lecture auto", "Enable auto read")}
                                     >
                                         {autoRead ? <Volume2 className={`${isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} /> : <VolumeX className={`${isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />}
                                         <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                                            {autoRead ? "قراءة تلقائية" : "قراءة معطلة"}
+                                            {autoRead ? l("قراءة تلقائية", "Lecture auto", "Auto read") : l("قراءة معطلة", "Lecture desactivee", "Read disabled")}
                                         </span>
                                     </button>
                                     
@@ -778,7 +810,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                             className={`flex items-center bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-all ${isMobile ? 'gap-1.5 px-3 py-1.5' : 'gap-2 px-4 py-2'}`}
                                         >
                                             <X className={`${isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
-                                            <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>إيقاف</span>
+                                            <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>{l("إيقاف", "Arreter", "Stop")}</span>
                                         </button>
                                     )}
                                     
@@ -788,7 +820,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                             className={`flex items-center bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-all ${isMobile ? 'gap-1.5 px-3 py-1.5' : 'gap-2 px-4 py-2'}`}
                                         >
                                             <Volume2 className={`${isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
-                                            <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>إعادة القراءة</span>
+                                            <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>{l("إعادة القراءة", "Relire", "Read again")}</span>
                                         </button>
                                     )}
                                 </div>
@@ -812,7 +844,9 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
 
                             {/* Question */}
                             <div className={`bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl border-2 border-blue-200 ${isMobile ? 'p-5 mb-6' : 'p-8 mb-8'}`}>
-                                <div className={`text-center ${isMobile ? 'text-3xl mb-3' : 'text-4xl mb-4'}`}>💭</div>
+                                <div className="flex justify-center mb-4">
+                                    <MessageCircle className={`${isMobile ? 'w-10 h-10' : 'w-12 h-12'} text-blue-500`} />
+                                </div>
                                 <p className={`text-gray-800 font-bold text-center leading-relaxed ${isMobile ? 'text-xl' : 'text-2xl md:text-3xl'}`}>
                                     {currentQuestion}
                                 </p>
@@ -823,8 +857,8 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                 <div className={`flex items-start ${isMobile ? 'gap-2' : 'gap-3'}`}>
                                     <Star className={`text-yellow-600 flex-shrink-0 mt-1 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                                     <div>
-                                        <p className={`font-semibold text-yellow-800 ${isMobile ? 'text-sm mb-0.5' : 'mb-1'}`}>نصيحة</p>
-                                        <p className={`text-yellow-700 ${isMobile ? 'text-xs' : 'text-sm'}`}>كونوا صادقين ومنفتحين في إجاباتكم. الصدق يقرب القلوب!</p>
+                                        <p className={`font-semibold text-yellow-800 ${isMobile ? 'text-sm mb-0.5' : 'mb-1'}`}>{l("نصيحة", "Conseil", "Tip")}</p>
+                                        <p className={`text-yellow-700 ${isMobile ? 'text-xs' : 'text-sm'}`}>{l("كونوا صادقين ومنفتحين في إجاباتكم. الصدق يقرب القلوب!", "Soyez sinceres et ouverts. La sincerite rapproche les coeurs !", "Be honest and open. Honesty brings hearts closer!")}</p>
                                     </div>
                                 </div>
                             </div>
@@ -835,13 +869,13 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                     onClick={backToPlaying}
                                     className={`bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg ${isMobile ? 'flex-none py-3 text-base' : 'flex-1 py-4 text-lg'}`}
                                 >
-                                    ✓ تم الإجابة
+                                    {l("✓ تم الإجابة", "✓ Repondu", "✓ Answered")}
                                 </button>
                                 <button
                                     onClick={getRandomQuestion}
                                     className={`bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl transition-all duration-300 ${isMobile ? 'flex-none py-3 text-base' : 'px-6 py-4 text-lg'}`}
                                 >
-                                    ⤴ سؤال آخر
+                                    {l("⤴ سؤال آخر", "⤴ Autre question", "⤴ Another question")}
                                 </button>
                             </div>
                         </CardContent>
@@ -858,7 +892,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                             <div className={`text-center ${isMobile ? 'mb-6' : 'mb-8'}`}>
                                 <div className={`inline-block bg-gradient-to-r from-pink-500 to-red-600 text-white rounded-full animate-pulse ${isMobile ? 'px-4 py-2 mb-3' : 'px-6 py-3 mb-4'}`}>
                                     <Sparkles className={`inline mr-2 ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
-                                    <span className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>تحدي رومانسي</span>
+                                    <span className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>{t("romanticChallenge")}</span>
                                 </div>
                                 
                                 {/* Audio controls */}
@@ -870,11 +904,11 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                                 ? 'bg-green-100 text-green-700 hover:bg-green-200' 
                                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
-                                        title={autoRead ? "تعطيل القراءة التلقائية" : "تفعيل القراءة التلقائية"}
+                                        title={autoRead ? l("تعطيل القراءة التلقائية", "Desactiver la lecture auto", "Disable auto read") : l("تفعيل القراءة التلقائية", "Activer la lecture auto", "Enable auto read")}
                                     >
                                         {autoRead ? <Volume2 className={`${isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} /> : <VolumeX className={`${isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />}
                                         <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                                            {autoRead ? "قراءة تلقائية" : "قراءة معطلة"}
+                                            {autoRead ? l("قراءة تلقائية", "Lecture auto", "Auto read") : l("قراءة معطلة", "Lecture desactivee", "Read disabled")}
                                         </span>
                                     </button>
                                     
@@ -884,7 +918,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                             className={`flex items-center bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-all ${isMobile ? 'gap-1.5 px-3 py-1.5' : 'gap-2 px-4 py-2'}`}
                                         >
                                             <X className={`${isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
-                                            <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>إيقاف</span>
+                                            <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>{l("إيقاف", "Arreter", "Stop")}</span>
                                         </button>
                                     )}
                                     
@@ -894,7 +928,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                             className={`flex items-center bg-pink-100 text-pink-700 hover:bg-pink-200 rounded-lg transition-all ${isMobile ? 'gap-1.5 px-3 py-1.5' : 'gap-2 px-4 py-2'}`}
                                         >
                                             <Volume2 className={`${isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
-                                            <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>إعادة القراءة</span>
+                                            <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>{l("إعادة القراءة", "Relire", "Read again")}</span>
                                         </button>
                                     )}
                                 </div>
@@ -932,8 +966,8 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                 <div className={`flex items-start ${isMobile ? 'gap-2' : 'gap-3'}`}>
                                     <Heart className={`text-pink-600 flex-shrink-0 mt-1 animate-pulse ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                                     <div>
-                                        <p className={`font-semibold text-pink-800 ${isMobile ? 'text-sm mb-0.5' : 'mb-1'}`}>تشجيع</p>
-                                        <p className={`text-pink-700 ${isMobile ? 'text-xs' : 'text-sm'}`}>لا تخجلوا! هذه اللحظات ستكون من أجمل ذكرياتكم 💕</p>
+                                        <p className={`font-semibold text-pink-800 ${isMobile ? 'text-sm mb-0.5' : 'mb-1'}`}>{l("تشجيع", "Encouragement", "Encouragement")}</p>
+                                        <p className={`text-pink-700 ${isMobile ? 'text-xs' : 'text-sm'}`}>{l("لا تخجلوا! هذه اللحظات ستكون من أجمل ذكرياتكم", "N'hesitez pas ! Ces moments seront parmi vos plus beaux souvenirs", "Don't be shy! These moments will become beautiful memories")}</p>
                                     </div>
                                 </div>
                             </div>
@@ -944,13 +978,13 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                     onClick={backToPlaying}
                                     className={`bg-gradient-to-r from-pink-500 to-red-600 hover:from-pink-600 hover:to-red-700 text-white font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg ${isMobile ? 'flex-none py-3 text-base' : 'flex-1 py-4 text-lg'}`}
                                 >
-                                    ✓ تم التحدي
+                                    {l("✓ تم التحدي", "✓ Defi termine", "✓ Challenge done")}
                                 </button>
                                 <button
                                     onClick={getRandomDare}
                                     className={`bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-xl transition-all duration-300 ${isMobile ? 'flex-none py-3 text-base' : 'px-6 py-4 text-lg'}`}
                                 >
-                                    ⤴ تحدي آخر
+                                    {l("⤴ تحدي آخر", "⤴ Autre defi", "⤴ Another challenge")}
                                 </button>
                             </div>
                         </CardContent>
@@ -971,12 +1005,12 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                         className={`bg-white/20 hover:bg-white/30 rounded-full transition-all flex items-center ${isMobile ? 'p-1.5 gap-1' : 'p-2 gap-2'}`}
                                     >
                                         <ArrowLeft className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
-                                        <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>رجوع</span>
+                                        <span className={`font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>{t("back")}</span>
                                     </button>
                                     <h2 className={`font-bold flex items-center ${isMobile ? 'text-base gap-1' : 'text-2xl gap-2'}`}>
                                         <Camera className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
-                                        <span className={`${isMobile ? 'hidden' : 'inline'}`}>التقاط صورة رومانسية</span>
-                                        <span className={`${isMobile ? 'inline' : 'hidden'}`}>صورة رومانسية</span>
+                                        <span className={`${isMobile ? 'hidden' : 'inline'}`}>{l("التقاط صورة رومانسية", "Prendre une photo romantique", "Take a romantic photo")}</span>
+                                        <span className={`${isMobile ? 'inline' : 'hidden'}`}>{l("صورة رومانسية", "Photo romantique", "Romantic photo")}</span>
                                     </h2>
                                     <button
                                         onClick={stopCamera}
@@ -1003,10 +1037,6 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                 />
                                 <canvas ref={canvasRef} className="hidden" />
                                 
-                                {/* Overlay hearts */}
-                                <div className={`absolute opacity-50 animate-pulse ${isMobile ? 'top-2 right-2 text-2xl' : 'top-4 right-4 text-4xl'}`}>❤️</div>
-                                <div className={`absolute opacity-50 animate-pulse ${isMobile ? 'bottom-2 left-2 text-2xl' : 'bottom-4 left-4 text-4xl'}`}>💕</div>
-                                
                                 {/* Frame overlay */}
                                 <div className="absolute inset-0 pointer-events-none">
                                     <div className={`absolute inset-0 border-pink-500/30 rounded-lg ${isMobile ? 'border-2 m-2' : 'border-4 m-4'}`}></div>
@@ -1020,7 +1050,7 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                     className={`w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg flex items-center justify-center ${isMobile ? 'py-3 gap-2 text-base' : 'py-4 gap-3 text-lg'}`}
                                 >
                                     <Camera className={`${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
-                                    التقاط الصورة 📸
+                                    {l("التقاط الصورة", "Prendre la photo", "Capture photo")}
                                 </button>
                             </div>
                         </div>
@@ -1031,19 +1061,19 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                 <div className={`flex items-center justify-between ${isMobile ? 'mb-3' : 'mb-4'}`}>
                                     <h3 className={`font-bold text-gray-800 flex items-center ${isMobile ? 'text-base gap-1.5' : 'text-xl gap-2'}`}>
                                         <Heart className={`text-pink-500 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
-                                        ذكرياتكما ({capturedPhotos.length})
+                                        {l("ذكرياتكما", "Vos souvenirs", "Your memories")} ({capturedPhotos.length})
                                     </h3>
                                     <div className={`flex items-center ${isMobile ? 'gap-1.5' : 'gap-2'}`}>
                                         <button
                                             onClick={clearAllPhotos}
                                             className={`text-red-500 hover:text-red-700 font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}
                                         >
-                                            حذف الكل
+                                            {l("حذف الكل", "Tout supprimer", "Delete all")}
                                         </button>
                                         <button
                                             onClick={backToPlaying}
                                             className={`bg-gray-200 hover:bg-gray-300 rounded-full transition-all ${isMobile ? 'p-1.5' : 'p-2'}`}
-                                            title="إغلاق"
+                                            title={l("إغلاق", "Fermer", "Close")}
                                         >
                                             <X className={`text-gray-700 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                                         </button>
@@ -1061,14 +1091,14 @@ export default function FirstDateGame({ isMobile, setCurrentGame }) {
                                                 <button
                                                     onClick={() => downloadPhoto(photo)}
                                                     className={`bg-white/90 hover:bg-white rounded-full transition-all ${isMobile ? 'p-1.5' : 'p-2'}`}
-                                                    title="تحميل"
+                                                    title={l("تحميل", "Telecharger", "Download")}
                                                 >
                                                     <Download className={`text-pink-600 ${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
                                                 </button>
                                                 <button
                                                     onClick={() => deletePhoto(photo.id)}
                                                     className={`bg-white/90 hover:bg-white rounded-full transition-all ${isMobile ? 'p-1.5' : 'p-2'}`}
-                                                    title="حذف"
+                                                    title={l("حذف", "Supprimer", "Delete")}
                                                 >
                                                     <span className={`text-red-600 font-bold ${isMobile ? 'text-sm' : 'text-base'}`}>✕</span>
                                                 </button>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react"
-import { ArrowLeft, Clock, Trophy, Users, Pause, Play, RotateCcw, Volume2, VolumeX, Flame, X } from "lucide-react"
+import { ArrowLeft, Clock, Trophy, Users, Pause, Play, RotateCcw, Volume2, VolumeX, Flame, Brain, Zap } from "lucide-react"
 import footballQuestionsData from "../../data/footballQuestions.json"
 import footballDaresData from "../../data/footballDares.json"
+import { useLanguage } from "../../contexts/LanguageContext"
 
 const clubs = [
     {
@@ -303,6 +304,86 @@ const players = [
 ]
 
 export default function FootballChallengeGame({ isMobile, setCurrentGame, isDarkMode }) {
+    const { language } = useLanguage()
+    const ui = {
+        ar: {
+            title: "تحدي كرة القدم",
+            subtitle: "4 ألعاب مثيرة للمحترفين",
+            modeGuess: "خمن اللاعب المتقدم",
+            modeQuick: "تحدي اللاعبين السريع",
+            modeTurns: "تحدي الأدوار",
+            modeHard: "أسئلة صعبة جداً",
+            startChallenge: "ابدأ التحدي",
+            startRace: "ابدأ السباق",
+            startMatch: "ابدأ المواجهة",
+            startHard: "ابدأ التحدي الأصعب",
+            playerOne: "اللاعب الأول",
+            playerTwo: "اللاعب الثاني",
+            turn: "دور",
+            gameFinished: "انتهت اللعبة",
+            finalScore: "النتيجة النهائية",
+            congrats: "تهانينا",
+            punishment: "وقت العقاب",
+            loser: "اللاعب الخاسر",
+            wrong: "إجابة خاطئة",
+            timeout: "انتهى الوقت",
+            mustDo: "يجب عليك تنفيذ التحدي",
+            challengeDone: "أكملت التحدي",
+            success: "أحسنت",
+        },
+        fr: {
+            title: "Defi Football",
+            subtitle: "4 modes pour experts",
+            modeGuess: "Devine le joueur",
+            modeQuick: "Defi rapide des joueurs",
+            modeTurns: "Defi par tours",
+            modeHard: "Quiz tres difficile",
+            startChallenge: "Commencer",
+            startRace: "Lancer la course",
+            startMatch: "Lancer le duel",
+            startHard: "Lancer le mode difficile",
+            playerOne: "Joueur 1",
+            playerTwo: "Joueur 2",
+            turn: "Tour",
+            gameFinished: "Partie terminee",
+            finalScore: "Score final",
+            congrats: "Felicitations",
+            punishment: "Temps de penalite",
+            loser: "Joueur perdant",
+            wrong: "Mauvaise reponse",
+            timeout: "Temps ecoule",
+            mustDo: "Le defi doit etre execute",
+            challengeDone: "Defi termine",
+            success: "Bravo",
+        },
+        en: {
+            title: "Football Challenge",
+            subtitle: "4 competitive game modes",
+            modeGuess: "Advanced Player Guess",
+            modeQuick: "Quick Players Challenge",
+            modeTurns: "Turn-Based Challenge",
+            modeHard: "Very Hard Quiz",
+            startChallenge: "Start Challenge",
+            startRace: "Start Race",
+            startMatch: "Start Match",
+            startHard: "Start Hard Mode",
+            playerOne: "Player One",
+            playerTwo: "Player Two",
+            turn: "Turn",
+            gameFinished: "Game Finished",
+            finalScore: "Final Score",
+            congrats: "Congratulations",
+            punishment: "Penalty Time",
+            loser: "Losing player",
+            wrong: "Wrong answer",
+            timeout: "Time is up",
+            mustDo: "Challenge must be completed",
+            challengeDone: "Challenge completed",
+            success: "Well done",
+        },
+    }
+    const t = (key) => ui[language]?.[key] || ui.ar[key]
+
     const [gameMode, setGameMode] = useState("menu")
     const [currentPlayer, setCurrentPlayer] = useState(0)
     const [scores, setScores] = useState([0, 0])
@@ -584,9 +665,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
     return (
         <div
             className={`min-h-screen transition-colors duration-300 ${
-                isDarkMode 
-                    ? 'bg-gradient-to-br from-green-900 via-blue-900 to-purple-900' 
-                    : 'bg-gradient-to-br from-green-100 via-blue-100 to-purple-100'
+                isDarkMode ? 'bg-black' : 'bg-white'
             } ${isMobile ? "px-4 py-6 pb-24" : "px-8 py-12 pb-8"}`}
         >
             {/* Header */}
@@ -607,11 +686,11 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                             isDarkMode ? 'text-white' : 'text-gray-900'
                         }`}
                     >
-                        ⚽ تحدي كرة القدم
+                        {t("title")}
                     </h1>
                     <p className={`transition-colors ${
                         isDarkMode ? 'text-green-200' : 'text-green-700'
-                    }`}>4 ألعاب مثيرة للمحترفين</p>
+                    }`}>{t("subtitle")}</p>
                 </div>
                 <button
                     onClick={toggleSound}
@@ -636,8 +715,8 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                             : 'bg-gradient-to-br from-blue-400 to-purple-500'
                     }`}>
                         <div className="p-6 text-center text-white">
-                            <div className="text-6xl mb-4">🧠</div>
-                            <h3 className="text-xl font-bold mb-3">خمن اللاعب المتقدم</h3>
+                            <Brain className="w-14 h-14 mx-auto mb-4" strokeWidth={1.5} />
+                            <h3 className="text-xl font-bold mb-3">{t("modeGuess")}</h3>
                             <p className={`mb-4 text-sm leading-relaxed ${
                                 isDarkMode ? 'text-blue-100' : 'text-blue-50'
                             }`}>
@@ -653,7 +732,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 onClick={startGuessGame}
                                 className="w-full bg-white text-blue-600 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl transition-all duration-300"
                             >
-                                ابدأ التحدي
+                                {t("startChallenge")}
                             </button>
                         </div>
                     </div>
@@ -665,8 +744,8 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                             : 'bg-gradient-to-br from-orange-400 to-red-400'
                     }`}>
                         <div className="p-6 text-center text-white">
-                            <div className="text-6xl mb-4">⚡</div>
-                            <h3 className="text-xl font-bold mb-3">تحدي اللاعبين السريع</h3>
+                            <Zap className="w-14 h-14 mx-auto mb-4" strokeWidth={1.5} />
+                            <h3 className="text-xl font-bold mb-3">{t("modeQuick")}</h3>
                             <p className={`mb-4 text-sm leading-relaxed ${
                                 isDarkMode ? 'text-orange-100' : 'text-orange-50'
                             }`}>
@@ -682,7 +761,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 onClick={startQuickGame}
                                 className="w-full bg-white text-orange-600 hover:bg-orange-50 font-bold px-6 py-3 rounded-xl transition-all duration-300"
                             >
-                                ابدأ السباق
+                                {t("startRace")}
                             </button>
                         </div>
                     </div>
@@ -694,8 +773,8 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                             : 'bg-gradient-to-br from-purple-400 to-pink-400'
                     }`}>
                         <div className="p-6 text-center text-white">
-                            <div className="text-6xl mb-4">🔄</div>
-                            <h3 className="text-xl font-bold mb-3">تحدي الأدوار</h3>
+                            <RotateCcw className="w-14 h-14 mx-auto mb-4" strokeWidth={1.5} />
+                            <h3 className="text-xl font-bold mb-3">{t("modeTurns")}</h3>
                             <p className={`mb-4 text-sm leading-relaxed ${
                                 isDarkMode ? 'text-purple-100' : 'text-purple-50'
                             }`}>
@@ -711,7 +790,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 onClick={startTurnsGame}
                                 className="w-full bg-white text-purple-600 hover:bg-purple-50 font-bold px-6 py-3 rounded-xl transition-all duration-300"
                             >
-                                ابدأ المواجهة
+                                {t("startMatch")}
                             </button>
                         </div>
                     </div>
@@ -723,8 +802,8 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                             : 'bg-gradient-to-br from-red-600 to-gray-800'
                     }`}>
                         <div className="p-6 text-center text-white">
-                            <div className="text-6xl mb-4">🔥</div>
-                            <h3 className="text-xl font-bold mb-3">أسئلة صعبة جداً</h3>
+                            <Flame className="w-14 h-14 mx-auto mb-4" strokeWidth={1.5} />
+                            <h3 className="text-xl font-bold mb-3">{t("modeHard")}</h3>
                             <p className={`mb-4 text-sm leading-relaxed ${
                                 isDarkMode ? 'text-red-100' : 'text-red-50'
                             }`}>
@@ -740,7 +819,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 onClick={startHardQuizGame}
                                 className="w-full bg-white text-red-600 hover:bg-red-50 font-bold px-6 py-3 rounded-xl transition-all duration-300"
                             >
-                                ابدأ التحدي الأصعب
+                                {t("startHard")}
                             </button>
                         </div>
                     </div>
@@ -761,10 +840,10 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 <h3 className={`text-xl md:text-2xl font-bold mb-2 transition-colors ${
                                     isDarkMode ? 'text-white' : 'text-gray-800'
                                 }`}>
-                                    {gameMode === "guess" && "خمن اللاعب المتقدم"}
-                                    {gameMode === "quick" && "تحدي اللاعبين السريع"}
-                                    {gameMode === "turns" && "تحدي الأدوار"}
-                                    {gameMode === "hardquiz" && "أسئلة صعبة جداً 🔥"}
+                                    {gameMode === "guess" && t("modeGuess")}
+                                    {gameMode === "quick" && t("modeQuick")}
+                                    {gameMode === "turns" && t("modeTurns")}
+                                    {gameMode === "hardquiz" && t("modeHard")}
                                 </h3>
                                 {selectedClub && (
                                     <p className={`text-base md:text-lg transition-colors ${
@@ -844,7 +923,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                             >
                                 <h4 className={`font-bold mb-2 ${
                                     isDarkMode ? 'text-white' : 'text-gray-800'
-                                }`}>اللاعب الأول</h4>
+                                }`}>{t("playerOne")}</h4>
                                 <div className={`text-2xl md:text-3xl font-bold ${
                                     isDarkMode ? 'text-blue-400' : 'text-blue-600'
                                 }`}>{scores[0]}</div>
@@ -862,7 +941,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                             >
                                 <h4 className={`font-bold mb-2 ${
                                     isDarkMode ? 'text-white' : 'text-gray-800'
-                                }`}>اللاعب الثاني</h4>
+                                }`}>{t("playerTwo")}</h4>
                                 <div className={`text-2xl md:text-3xl font-bold ${
                                     isDarkMode ? 'text-green-400' : 'text-green-600'
                                 }`}>{scores[1]}</div>
@@ -874,9 +953,9 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 <p className={`text-lg font-semibold ${
                                     isDarkMode ? 'text-white' : 'text-gray-700'
                                 }`}>
-                                    دور:{" "}
+                                    {t("turn")}:{" "}
                                     <span className={isDarkMode ? 'text-blue-400' : 'text-blue-600'}>
-                                        اللاعب {currentPlayer + 1}
+                                        {language === "ar" ? `اللاعب ${currentPlayer + 1}` : `${t("playerOne").split(" ")[0]} ${currentPlayer + 1}`}
                                     </span>
                                 </p>
                                 <p className={`text-sm mt-1 ${
@@ -895,7 +974,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 : 'bg-gradient-to-br from-blue-400 to-purple-500'
                         }`}>
                             <div className="p-6 md:p-8 text-center text-white">
-                                <div className="text-5xl md:text-6xl mb-6">🤔</div>
+                                <Brain className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-6" strokeWidth={1.5} />
                                 <h3 className="text-xl md:text-2xl font-bold mb-6">من هذا اللاعب؟</h3>
                                 <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 md:p-6 mb-6 text-right">
                                     <div className="space-y-2 md:space-y-3">
@@ -939,7 +1018,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 : 'bg-gradient-to-br from-red-600 to-gray-800'
                         }`}>
                             <div className="p-6 md:p-8 text-white">
-                                <div className="text-5xl md:text-6xl mb-6 text-center">🔥</div>
+                                <Flame className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-6" strokeWidth={1.5} />
                                 
                                 {/* Question Info */}
                                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-6 mb-6">
@@ -1001,8 +1080,8 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                     }`}>
                                         <p className="text-xl md:text-2xl font-bold mb-2">
                                             {selectedAnswer === currentQuestion.correctAnswer 
-                                                ? "إجابة صحيحة! 🎉 +10 نقاط" 
-                                                : `إجابة خاطئة! ❌ الإجابة الصحيحة: ${currentQuestion.correctAnswer}`
+                                                ? (language === "ar" ? "إجابة صحيحة! +10 نقاط" : language === "fr" ? "Bonne reponse! +10 points" : "Correct answer! +10 points")
+                                                : (language === "ar" ? `إجابة خاطئة! الإجابة الصحيحة: ${currentQuestion.correctAnswer}` : language === "fr" ? `Mauvaise reponse! Bonne reponse: ${currentQuestion.correctAnswer}` : `Wrong answer! Correct answer: ${currentQuestion.correctAnswer}`)
                                             }
                                         </p>
                                     </div>
@@ -1018,7 +1097,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 : 'bg-gradient-to-br from-orange-400 to-red-400'
                         }`}>
                             <div className="p-6 md:p-8 text-center text-white">
-                                <div className="text-5xl md:text-6xl mb-6">⚡</div>
+                                <Zap className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-6" strokeWidth={1.5} />
                                 <h3 className="text-2xl md:text-3xl font-bold mb-4">{selectedClub.name}</h3>
                                 <p className="text-lg md:text-xl mb-6">اذكر أكبر عدد من اللاعبين شفهياً!</p>
                                 <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 md:p-6 mb-6">
@@ -1046,15 +1125,15 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 : 'bg-gradient-to-br from-purple-400 to-pink-400'
                         }`}>
                             <div className="p-6 md:p-8 text-center text-white">
-                                <div className="text-5xl md:text-6xl mb-6">🔄</div>
+                                <RotateCcw className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-6" strokeWidth={1.5} />
                                 <h3 className="text-2xl md:text-3xl font-bold mb-4">{selectedClub.name}</h3>
                                 <p className="text-lg md:text-xl mb-6">اذكر لاعب واحد من هذا النادي!</p>
                                 <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 md:p-6 mb-6">
                                     <p className="text-xl md:text-2xl font-bold mb-2">دور: اللاعب {currentPlayer + 1}</p>
                                     <p className="text-base md:text-lg mb-4">لديك 10 ثوان فقط</p>
                                     <div className="text-xs md:text-sm">
-                                        <p>⚠️ لا تكرر الأسماء المذكورة</p>
-                                        <p>⚠️ خطأ واحد = خسارة فورية</p>
+                                        <p>لا تكرر الأسماء المذكورة</p>
+                                        <p>خطأ واحد = خسارة فورية</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-3 md:gap-4 justify-center flex-wrap">
@@ -1087,21 +1166,21 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                 : 'bg-gradient-to-br from-yellow-400 to-orange-500'
                         }`}>
                             <div className="p-6 md:p-8 text-center text-white">
-                                <div className="text-5xl md:text-6xl mb-6">🏆</div>
-                                <h3 className="text-2xl md:text-3xl font-bold mb-4">انتهت اللعبة!</h3>
+                                <Trophy className="w-14 h-14 md:w-16 md:h-16 mx-auto mb-6" strokeWidth={1.5} />
+                                <h3 className="text-2xl md:text-3xl font-bold mb-4">{t("gameFinished")}</h3>
                                 {winner !== null && gameMode === "turns" ? (
                                     <div>
                                         <p className="text-xl md:text-2xl mb-4">
                                             الفائز: <span className="font-bold">اللاعب {winner + 1}</span>
                                         </p>
-                                        <p className="text-base md:text-lg mb-6">تهانينا! 🎉</p>
+                                        <p className="text-base md:text-lg mb-6">{t("congrats")}</p>
                                     </div>
                                 ) : (
                                     <div>
-                                        <p className="text-xl md:text-2xl mb-4">النتيجة النهائية</p>
+                                        <p className="text-xl md:text-2xl mb-4">{t("finalScore")}</p>
                                         {gameMode === "hardquiz" && (
                                             <p className="text-base md:text-lg mb-4 bg-white/20 rounded-xl p-3">
-                                                انتهت جميع الأسئلة! 🔥
+                                                انتهت جميع الأسئلة
                                             </p>
                                         )}
                                         <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
@@ -1153,18 +1232,18 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                             {!dareCompleted ? (
                                 <>
                                     {/* Header */}
-                                    <div className="text-5xl sm:text-6xl md:text-7xl mb-3 sm:mb-4 animate-bounce">🔥</div>
+                                    <Flame className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-3 sm:mb-4 animate-bounce" strokeWidth={1.5} />
                                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 animate-pulse">
-                                        وقت العقاب! ⚡
+                                        {t("punishment")}
                                     </h2>
                                     
                                     {/* Loser announcement */}
                                     <div className="bg-black/30 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
                                         <p className="text-lg sm:text-xl md:text-2xl mb-1 sm:mb-2">
-                                            اللاعب الخاسر: <span className="font-bold text-red-300">اللاعب {loserPlayer + 1}</span>
+                                            {t("loser")}: <span className="font-bold text-red-300">{language === "ar" ? `اللاعب ${loserPlayer + 1}` : `${t("playerOne").split(" ")[0]} ${loserPlayer + 1}`}</span>
                                         </p>
                                         <p className="text-xs sm:text-sm md:text-base opacity-80">
-                                            {gameMode === "turns" && winner !== null ? "❌ إجابة خاطئة!" : "⏰ انتهى الوقت!"} يجب عليك تنفيذ التحدي
+                                            {gameMode === "turns" && winner !== null ? t("wrong") : t("timeout")} - {t("mustDo")}
                                         </p>
                                     </div>
 
@@ -1194,7 +1273,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                     {/* Warning message */}
                                     <div className="bg-red-900/50 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
                                         <p className="text-sm sm:text-base md:text-lg font-semibold flex items-center justify-center gap-2 flex-wrap">
-                                            ⚠️ يجب تنفيذ التحدي قبل المتابعة!
+                                            يجب تنفيذ التحدي قبل المتابعة
                                         </p>
                                     </div>
 
@@ -1203,7 +1282,7 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                                         onClick={completeDare} 
                                         className="w-full bg-white text-red-600 hover:bg-yellow-100 font-bold px-6 sm:px-8 py-3 sm:py-4 rounded-lg sm:rounded-xl transition-all duration-300 hover:scale-105 text-base sm:text-lg shadow-2xl"
                                     >
-                                        ✅ أكملت التحدي!
+                                        {t("challengeDone")}
                                     </button>
 
                                     <p className="text-xs sm:text-sm mt-3 sm:mt-4 opacity-70">
@@ -1213,14 +1292,14 @@ export default function FootballChallengeGame({ isMobile, setCurrentGame, isDark
                             ) : (
                                 <>
                                     {/* Success message */}
-                                    <div className="text-5xl sm:text-6xl md:text-7xl mb-3 sm:mb-4">🎉</div>
+                                    <Trophy className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-3 sm:mb-4" strokeWidth={1.5} />
                                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
-                                        أحسنت! 👏
+                                        {t("success")}
                                     </h2>
                                     <p className="text-lg sm:text-xl md:text-2xl mb-3 sm:mb-4">
                                         تم تنفيذ التحدي بنجاح
                                     </p>
-                                    <div className="text-4xl sm:text-5xl">✅</div>
+                                    <div className="text-4xl sm:text-5xl">تم</div>
                                 </>
                             )}
                         </div>

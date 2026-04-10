@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Coffee, Zap, Check, Users, X } from "lucide-react";
+import { ArrowLeft, Coffee, Zap, Check, Users, X, Target, AlertTriangle, Trophy } from "lucide-react";
 
 
 
@@ -633,7 +633,7 @@ export default function CoffeeNameThreeThings({
                 <div className={`text-center animate-fadeIn ${isMobile ? "px-4 max-w-xs" : "px-8"}`}>
                     {/* Animated Icon */}
                     <div className={`${isMobile ? "mb-4" : "mb-6"} animate-bounce`}>
-                        <div className={`${isMobile ? "text-6xl" : "text-8xl sm:text-9xl md:text-[12rem]"} mb-2`}>🎯</div>
+                        <Target className={`${isMobile ? "w-16 h-16" : "w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32"} mx-auto mb-2 text-cyan-400`} strokeWidth={1.5} />
                     </div>
                     
                     {/* Title with gradient */}
@@ -667,7 +667,7 @@ export default function CoffeeNameThreeThings({
                     isDarkMode ? 'bg-gray-800' : 'bg-white'
                 }`}>
                     <div className={`${isMobile ? "p-6" : "p-8"} text-center`}>
-                        <div className={`${isMobile ? "text-5xl" : "text-6xl"} mb-4`}>🔞</div>
+                        <AlertTriangle className={`${isMobile ? "w-12 h-12" : "w-14 h-14"} mx-auto mb-4 text-red-500`} strokeWidth={1.5} />
                         <h2 className={`${isMobile ? "text-xl" : "text-2xl"} font-bold mb-4 ${
                             isDarkMode ? 'text-white' : 'text-gray-900'
                         }`}>تحذير - محتوى للبالغين</h2>
@@ -708,9 +708,7 @@ export default function CoffeeNameThreeThings({
         return (
             <div
                 className={`min-h-screen transition-colors duration-300 ${
-                    isDarkMode 
-                        ? 'bg-gradient-to-br from-blue-900 via-cyan-900 to-teal-900' 
-                        : 'bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50'
+                    isDarkMode ? 'bg-black' : 'bg-white'
                 } ${isMobile ? "px-4 pt-6 pb-24" : "px-8 pt-12 pb-8"}`}
             >
                 {/* Header */}
@@ -729,7 +727,7 @@ export default function CoffeeNameThreeThings({
                         <h1 className={`font-bold ${isMobile ? "text-lg" : "text-4xl"} ${isMobile ? "mb-0.5" : "mb-2"} transition-colors ${
                             isDarkMode ? 'text-white' : 'text-gray-900'
                         }`}>
-                            🎯 سمي 3 حاجات
+                            سمي 3 حاجات
                         </h1>
                         <p className={`${isMobile ? "text-[10px]" : "text-base"} transition-colors ${
                             isDarkMode ? 'text-cyan-300' : 'text-cyan-700'
@@ -847,10 +845,10 @@ export default function CoffeeNameThreeThings({
                             }`}>مستوى الصعوبة</p>
                             <div className="grid grid-cols-2 gap-2">
                                 {[
-                                    { value: "easy", label: "سهل 😊", color: "green" },
-                                    { value: "medium", label: "متوسط 🤔", color: "yellow" },
-                                    { value: "hard", label: "صعب 😤", color: "red" },
-                                    { value: "mixed", label: "مختلط 🎲", color: "purple" }
+                                    { value: "easy", label: "سهل", color: "green" },
+                                    { value: "medium", label: "متوسط", color: "yellow" },
+                                    { value: "hard", label: "صعب", color: "red" },
+                                    { value: "mixed", label: "مختلط", color: "purple" }
                                 ].map((level) => (
                                     <button
                                         key={level.value}
@@ -918,7 +916,6 @@ export default function CoffeeNameThreeThings({
                                         : 'bg-red-500 hover:bg-red-600 text-white hover:scale-105'
                                 }`}
                             >
-                                <span className={`${isMobile ? "text-base" : "text-lg"} mr-2`}>🔞</span>
                                 {adultContentEnabled
                                     ? "المحتوى للبالغين مفعّل"
                                     : "تفعيل المحتوى للبالغين"}
@@ -948,7 +945,7 @@ export default function CoffeeNameThreeThings({
                 }`}>
                     <h3 className={`${isMobile ? "text-base" : "text-xl"} font-bold ${isMobile ? "mb-2" : "mb-4"} ${
                         isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>📖 قواعد اللعبة</h3>
+                    }`}>قواعد اللعبة</h3>
                     <div className={`${isMobile ? "space-y-2" : "space-y-4"} ${isMobile ? "text-xs" : "text-base"} ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         <div className="flex gap-3 items-start">
                             <div className={`bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full ${isMobile ? "w-7 h-7 text-sm" : "w-8 h-8"} flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg`}>
@@ -972,7 +969,7 @@ export default function CoffeeNameThreeThings({
                             <div className={`bg-gradient-to-br from-purple-500 to-pink-600 rounded-full ${isMobile ? "w-7 h-7 text-sm" : "w-8 h-8"} flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg`}>
                                 4
                             </div>
-                            <p><span className="font-bold">الفوز:</span> اللاعب صاحب أعلى نقاط في النهاية يفوز! 🏆</p>
+                            <p><span className="font-bold">الفوز:</span> اللاعب صاحب أعلى نقاط في النهاية يفوز</p>
                         </div>
                     </div>
                 </div>
@@ -985,14 +982,14 @@ export default function CoffeeNameThreeThings({
                 }`}>
                     <h3 className={`${isMobile ? "text-base" : "text-xl"} font-bold ${isMobile ? "mb-2" : "mb-4"} ${
                         isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>🏆 نظام النقاط</h3>
+                    }`}>نظام النقاط</h3>
                     <div className={`grid grid-cols-3 ${isMobile ? "gap-2" : "gap-3 md:gap-4"}`}>
                         <div className={`${isMobile ? "p-3" : "p-4"} rounded-2xl text-center relative overflow-hidden group hover:scale-105 transition-transform duration-300 ${
                             isDarkMode ? 'bg-gradient-to-br from-green-900 to-emerald-900' : 'bg-gradient-to-br from-green-100 to-emerald-100'
                         }`}>
                             <div className="absolute inset-0 bg-gradient-to-t from-green-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <div className={`relative bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1.5 rounded-full ${isMobile ? "text-xs" : "text-sm"} font-bold inline-block mb-3 shadow-lg`}>
-                                سهل 😊
+                                سهل
                             </div>
                             <p className={`${isMobile ? "text-3xl" : "text-4xl"} font-black mb-1 ${
                                 isDarkMode ? 'text-green-400' : 'text-green-700'
@@ -1006,7 +1003,7 @@ export default function CoffeeNameThreeThings({
                         }`}>
                             <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <div className={`relative bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-3 py-1.5 rounded-full ${isMobile ? "text-xs" : "text-sm"} font-bold inline-block mb-3 shadow-lg`}>
-                                متوسط 🤔
+                                متوسط
                             </div>
                             <p className={`${isMobile ? "text-3xl" : "text-4xl"} font-black mb-1 ${
                                 isDarkMode ? 'text-yellow-400' : 'text-yellow-700'
@@ -1020,7 +1017,7 @@ export default function CoffeeNameThreeThings({
                         }`}>
                             <div className="absolute inset-0 bg-gradient-to-t from-red-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <div className={`relative bg-gradient-to-r from-red-500 to-pink-600 text-white px-3 py-1.5 rounded-full ${isMobile ? "text-xs" : "text-sm"} font-bold inline-block mb-3 shadow-lg`}>
-                                صعب 😤
+                                صعب
                             </div>
                             <p className={`${isMobile ? "text-3xl" : "text-4xl"} font-black mb-1 ${
                                 isDarkMode ? 'text-red-400' : 'text-red-700'
@@ -1040,9 +1037,7 @@ export default function CoffeeNameThreeThings({
         return (
             <div
                 className={`min-h-screen transition-colors duration-300 ${
-                    isDarkMode 
-                        ? 'bg-gradient-to-br from-blue-900 via-cyan-900 to-teal-900' 
-                        : 'bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50'
+                    isDarkMode ? 'bg-black' : 'bg-white'
                 } ${isMobile ? "px-4 pt-6 pb-24" : "px-8 pt-12 pb-8"}`}
             >
                 {/* Header */}
@@ -1113,13 +1108,13 @@ export default function CoffeeNameThreeThings({
                                     {players[currentPlayer].name}
                                 </p>
                             </div>
-                            <div className={`${isMobile ? "text-2xl" : "text-3xl"} animate-bounce`}>🎯</div>
+                            <Target className={`${isMobile ? "w-8 h-8" : "w-10 h-10"} animate-bounce`} strokeWidth={1.5} />
                         </div>
                     </div>
 
                     <div className="text-center mb-6">
                         <div className={`inline-block px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm ${isMobile ? "mb-2" : "mb-4"}`}>
-                            {currentPrompt.isAdult && <span className="mr-2">🔞</span>}
+                            {currentPrompt.isAdult && <span className="mr-2">18+</span>}
                             <span className={`text-white font-bold ${isMobile ? "text-xs" : "text-sm"}`}>
                                 {currentPrompt.category} • {currentPrompt.points} نقاط
                             </span>
@@ -1216,10 +1211,10 @@ export default function CoffeeNameThreeThings({
                     }`}>
                         {timeLeft > 0 ? (
                             <span className={timeLeft <= 3 ? 'text-red-500 animate-pulse' : ''}>
-                                ⏱️ {timeLeft} ثوان متبقية
+                                {timeLeft} ثوان متبقية
                             </span>
                         ) : (
-                            <span className="text-red-500">⏰ انتهى الوقت!</span>
+                            <span className="text-red-500">انتهى الوقت</span>
                         )}
                     </p>
                 </div>
@@ -1232,7 +1227,7 @@ export default function CoffeeNameThreeThings({
                 }`}>
                     <h3 className={`${isMobile ? "text-base" : "text-xl"} font-bold mb-4 ${
                         isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>📊 النتائج</h3>
+                    }`}>النتائج</h3>
                     <div className={`grid ${isMobile ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4"} gap-3`}>
                         {players.map((player, index) => (
                             <div
@@ -1250,7 +1245,7 @@ export default function CoffeeNameThreeThings({
                                 <span className={`font-semibold block ${isMobile ? "text-xs" : "text-sm"} ${
                                     isDarkMode ? 'text-white' : 'text-gray-900'
                                 }`}>{player.name}</span>
-                                {index === currentPlayer && <div className={`${isMobile ? "text-xl" : "text-2xl"} my-1`}>✍️</div>}
+                                {index === currentPlayer && <div className={`${isMobile ? "text-xs" : "text-sm"} my-1`}>الدور الحالي</div>}
                                 <p className={`${isMobile ? "text-xl" : "text-2xl"} font-bold mt-2 ${
                                     isDarkMode ? 'text-teal-400' : 'text-teal-600'
                                 }`}>{player.score}</p>
@@ -1378,9 +1373,7 @@ export default function CoffeeNameThreeThings({
         return (
             <div
                 className={`min-h-screen transition-colors duration-300 ${
-                    isDarkMode 
-                        ? 'bg-gradient-to-br from-blue-900 via-cyan-900 to-teal-900' 
-                        : 'bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50'
+                    isDarkMode ? 'bg-black' : 'bg-white'
                 } ${isMobile ? "px-4 pt-6 pb-24" : "px-8 pt-12 pb-8"}`}
             >
                 {/* Header */}
@@ -1431,7 +1424,7 @@ export default function CoffeeNameThreeThings({
                 }`}>
                     <div className="text-center">
                         <div className={`${isMobile ? "text-6xl" : "text-7xl md:text-8xl"} mb-4`}>
-                            {roundResult === "success" ? "🎉" : "❌"}
+                            {roundResult === "success" ? "تم" : "خطأ"}
                         </div>
                         <h2 className={`${isMobile ? "text-2xl" : "text-3xl md:text-4xl"} font-bold text-white mb-4`}>
                             {roundResult === "success" ? "ممتاز!" : "للأسف!"}
@@ -1480,7 +1473,7 @@ export default function CoffeeNameThreeThings({
                 }`}>
                     <h3 className={`text-xl font-bold mb-4 ${
                         isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>📊 النتائج</h3>
+                    }`}>النتائج</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {players.map((player, index) => (
                             <div
@@ -1520,9 +1513,7 @@ export default function CoffeeNameThreeThings({
         return (
             <div
                 className={`min-h-screen transition-colors duration-300 ${
-                    isDarkMode 
-                        ? 'bg-gradient-to-br from-blue-900 via-cyan-900 to-teal-900' 
-                        : 'bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50'
+                    isDarkMode ? 'bg-black' : 'bg-white'
                 } ${isMobile ? "px-4 pt-6 pb-24" : "px-8 pt-12 pb-8"}`}
             >
                 {/* Header */}
@@ -1541,7 +1532,7 @@ export default function CoffeeNameThreeThings({
                         <h1 className={`font-bold ${isMobile ? "text-2xl" : "text-4xl"} mb-2 ${
                             isDarkMode ? 'text-white' : 'text-gray-900'
                         }`}>
-                            🎮 انتهت اللعبة!
+                            انتهت اللعبة
                         </h1>
                         <p className={isDarkMode ? 'text-cyan-300' : 'text-cyan-700'}>
                             شكراً على اللعب!
@@ -1568,7 +1559,7 @@ export default function CoffeeNameThreeThings({
                             ? 'bg-gradient-to-br from-teal-800 to-cyan-900 border border-teal-600' 
                             : 'bg-gradient-to-br from-teal-400 to-cyan-500'
                     }`}>
-                        <div className="text-7xl md:text-8xl mb-4">🏆</div>
+                        <Trophy className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 text-white" strokeWidth={1.5} />
                         <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
                             {winner.name} فاز!
                         </h2>
@@ -1576,7 +1567,7 @@ export default function CoffeeNameThreeThings({
                             النتيجة النهائية: {winner.score} نقطة
                         </p>
                         <div className="inline-block bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-full font-bold text-lg">
-                            🎯 بطل اللعبة!
+                            بطل اللعبة
                         </div>
                     </div>
                 </div>
@@ -1589,7 +1580,7 @@ export default function CoffeeNameThreeThings({
                 }`}>
                     <h3 className={`text-xl font-bold mb-4 text-center ${
                         isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>📊 النتائج النهائية</h3>
+                    }`}>النتائج النهائية</h3>
                     <div className="space-y-3">
                         {sortedPlayers.map((player, index) => (
                             <div
@@ -1626,7 +1617,7 @@ export default function CoffeeNameThreeThings({
                                                             : "bg-gray-300 text-gray-600"
                                         }`}
                                     >
-                                        {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
+                                        {index + 1}
                                     </div>
                                     <span className={`font-bold ${
                                         isDarkMode ? 'text-white' : 'text-gray-900'

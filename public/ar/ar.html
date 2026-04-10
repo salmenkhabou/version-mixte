@@ -22,24 +22,38 @@
     </style>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-    <script src="shared-data.js"></script>
 </head>
 <body>
-    <a href="/" class="back-button">← Back to Menu</a>
+    <a href="index.html" class="back-button">← Back to Menu</a>
 
     <script>
-        const sharedData = window.AR_SHARED_DATA || {};
-        const dishes = sharedData.dishModels || {};
-        const defaultDishId = sharedData.defaultDishId || 'burger';
-
-        const selectedId = localStorage.getItem('selectedDish') || defaultDishId;
-        const dish = dishes[selectedId] || dishes[defaultDishId] || {
-            name: 'Classic Burger',
-            description: 'Juicy beef patty with cheese',
-            price: '$14.99',
-            model: 'burger.glb',
-            scale: '0.03 0.03 0.03'
+        // Dish data
+        const dishes = {
+            bruschetta: { name: 'Bruschetta', description: 'Toasted bread with fresh tomatoes, basil', price: '$8.99', model: 'day_71_-_1_scan_a_day_-_bruschetta.glb', scale: '0.05 0.05 0.05' },
+            soup: { name: 'Soup of the Day', description: 'Chef\'s daily creation', price: '$7.99', model: 'low_poly_vegetable_soup.glb', scale: '0.08 0.08 0.08' },
+            salad: { name: 'Garden Salad', description: 'Fresh mixed greens', price: '$9.99', model: 'salad.glb', scale: '0.15 0.15 0.15' },
+            calamari: { name: 'Fried Calamari', description: 'Crispy squid rings', price: '$12.99', model: 'the_grove_of_hobe_sound_-_app_-_calamari.glb', scale: '0.05 0.05 0.05' },
+            burger: { name: 'Classic Burger', description: 'Juicy beef patty with cheese', price: '$14.99', model: 'burger.glb', scale: '0.03 0.03 0.03' },
+            pizza: { name: 'Margherita Pizza', description: 'Fresh mozzarella and basil', price: '$16.99', model: 'pizza.glb', scale: '0.15 0.15 0.15' },
+            pasta: { name: 'Spaghetti Carbonara', description: 'Creamy bacon pasta', price: '$15.99', model: 'pasta.glb', scale: '0.08 0.08 0.08' },
+            steak: { name: 'Grilled Ribeye', description: 'Premium 12oz ribeye', price: '$32.99', model: 'steak.glb', scale: '0.15 0.15 0.15' },
+            salmon: { name: 'Grilled Salmon', description: 'Atlantic salmon', price: '$26.99', model: 'grilled_salmon_fish-poly.glb', scale: '0.1 0.1 0.1' },
+            chicken: { name: 'Roasted Chicken', description: 'Half chicken with rosemary', price: '$19.99', model: 'roasted_chicken.glb', scale: '0.08 0.08 0.08' },
+            risotto: { name: 'Mushroom Risotto', description: 'Creamy wild mushroom rice', price: '$18.99', model: 'bario_black_rice_bowl_scaniverse_lidar.glb', scale: '0.03 0.03 0.03' },
+            lasagna: { name: 'Beef Lasagna', description: 'Layers of pasta and beef', price: '$17.99', model: 'lasagna.glb', scale: '0.08 0.08 0.08' },
+            dessert: { name: 'Chocolate Lava Cake', description: 'Warm molten chocolate', price: '$9.99', model: 'desserts.glb', scale: '0.12 0.12 0.12' },
+            tiramisu: { name: 'Tiramisu', description: 'Classic Italian dessert', price: '$8.99', model: 'tiramisu.glb', scale: '0.08 0.08 0.08' },
+            cheesecake: { name: 'New York Cheesecake', description: 'Creamy with berries', price: '$9.99', model: 'cheesecake.glb', scale: '0.03 0.03 0.03' },
+            icecream: { name: 'Gelato Selection', description: 'Artisan Italian gelato', price: '$7.99', model: 'gelato.glb', scale: '0.03 0.03 0.03' },
+            coffee: { name: 'Espresso', description: 'Rich Italian espresso', price: '$3.99', model: 'caffe_latte_espresso_bitter.glb', scale: '0.08 0.08 0.08' },
+            latte: { name: 'Caffè Latte', description: 'Espresso with milk', price: '$5.99', model: 'caffe_latte_cup.glb', scale: '0.15 0.15 0.15' },
+            wine: { name: 'House Wine', description: 'Red or white wine', price: '$8.99', model: 'cocktail_martini.glb', scale: '0.15 0.15 0.15' },
+            cocktail: { name: 'Signature Cocktail', description: 'Today\'s special', price: '$12.99', model: 'cocktail_martini.glb', scale: '0.15 0.15 0.15' },
+            lemonade: { name: 'Fresh Lemonade', description: 'Homemade with mint', price: '$4.99', model: 'homemade_lemonade.glb', scale: '0.15 0.15 0.15' }
         };
+
+        const selectedId = localStorage.getItem('selectedDish') || 'burger';
+        const dish = dishes[selectedId] || dishes.burger;
 
         // Write the scene HTML directly with the correct model
         document.write(`

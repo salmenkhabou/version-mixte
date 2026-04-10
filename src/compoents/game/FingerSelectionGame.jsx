@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "../ui/card";
-import { ArrowLeft, Users, Zap } from "lucide-react";
+import { ArrowLeft, Users, Zap, Hand, Timer, Target, Flame, ShieldAlert } from "lucide-react";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { fingerSelectionChallenges } from "../../translations/gameContent";
 
 const challenges = [
   "أرسل رسالة على الإنستغرام لشخص عشوائي من أصدقائك وقل له 'أشتقت إليك'",
@@ -31,6 +33,66 @@ const challenges = [
 ];
 
 export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMode }) {
+  const { language } = useLanguage();
+  const texts = {
+    ar: {
+      title: "لعبة اختيار الإصبع",
+      adultsOnly: "للبالغين فقط +18",
+      putFingers: "ضعوا أصابعكم على الشاشة",
+      minPlayer: "يجب أن يضع لاعب واحد على الأقل إصبعه على الشاشة",
+      playersCount: "1+ لاعبين",
+      boldChallenges: "تحديات جريئة",
+      selecting: "جاري الاختيار...",
+      detected: "تم اكتشاف",
+      fingers: "أصابع",
+      selected: "تم الاختيار!",
+      selectedColor: "الإصبع المختار هو الإصبع الملون",
+      yourChallenge: "تحديك الجريء!",
+      newGame: "لعبة جديدة",
+      close: "إغلاق",
+      touchHere: "ضعوا أصابعكم هنا",
+      mouseHint: "أو انقر بالماوس للتجربة",
+    },
+    fr: {
+      title: "Selection du Doigt",
+      adultsOnly: "Réservé aux adultes +18",
+      putFingers: "Placez vos doigts sur l'écran",
+      minPlayer: "Au moins un joueur doit poser son doigt",
+      playersCount: "1+ joueurs",
+      boldChallenges: "Défis audacieux",
+      selecting: "Sélection en cours...",
+      detected: "Détecté",
+      fingers: "doigts",
+      selected: "Sélection terminée",
+      selectedColor: "Le doigt sélectionné est le doigt coloré",
+      yourChallenge: "Votre défi",
+      newGame: "Nouvelle partie",
+      close: "Fermer",
+      touchHere: "Placez vos doigts ici",
+      mouseHint: "ou cliquez avec la souris",
+    },
+    en: {
+      title: "Finger Selection Game",
+      adultsOnly: "Adults only +18",
+      putFingers: "Place your fingers on the screen",
+      minPlayer: "At least one player must touch the screen",
+      playersCount: "1+ players",
+      boldChallenges: "Bold challenges",
+      selecting: "Selecting...",
+      detected: "Detected",
+      fingers: "fingers",
+      selected: "Selection complete",
+      selectedColor: "The selected finger is the colored one",
+      yourChallenge: "Your bold challenge",
+      newGame: "New game",
+      close: "Close",
+      touchHere: "Place your fingers here",
+      mouseHint: "or click with the mouse",
+    },
+  };
+  const t = (key) => texts[language]?.[key] || texts.ar[key];
+  const localizedChallenges = fingerSelectionChallenges[language] || challenges;
+
   const [gameState, setGameState] = useState("waiting");
   const [touches, setTouches] = useState([]);
   const [selectedFinger, setSelectedFinger] = useState(null);
@@ -122,7 +184,7 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
     setGameState("selected");
 
     setTimeout(() => {
-      const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+      const randomChallenge = localizedChallenges[Math.floor(Math.random() * localizedChallenges.length)];
       setCurrentChallenge(randomChallenge);
       setGameState("challenge");
     }, 2000);
@@ -139,9 +201,7 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
   return (
     <div
       className={`min-h-screen transition-colors duration-300 ${
-        isDarkMode 
-          ? 'bg-gradient-to-br from-purple-900 via-pink-900 to-red-900' 
-          : 'bg-gradient-to-br from-purple-100 via-pink-100 to-red-100'
+        isDarkMode ? 'bg-black' : 'bg-white'
       } ${isMobile ? "px-4 py-6 pb-24" : "px-8 py-12 pb-8"}`}
     >
       {/* Header */}
@@ -162,13 +222,13 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
               isDarkMode ? 'text-white' : 'text-gray-900'
             }`}
           >
-            👆 لعبة اختيار الإصبع
+            {t("title")}
           </h1>
           <div className={`flex items-center justify-center gap-2 ${
             isDarkMode ? 'text-red-200' : 'text-red-700'
           }`}>
-            <span className="text-2xl">🔞</span>
-            <span className="font-semibold">للبالغين فقط +18</span>
+            <ShieldAlert className="w-5 h-5" />
+            <span className="font-semibold">{t("adultsOnly")}</span>
           </div>
         </div>
         <div className="w-12"></div>
@@ -183,23 +243,23 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
               : 'bg-white/95 border-gray-200'
           }`}>
             <div className="p-8 text-center">
-              <div className="text-6xl mb-6 animate-bounce">👆</div>
+              <Hand className="w-14 h-14 mx-auto mb-6 animate-bounce text-amber-500" strokeWidth={1.5} />
               <h2 className={`text-2xl font-bold mb-4 ${
                 isDarkMode ? 'text-white' : 'text-gray-800'
-              }`}>ضعوا أصابعكم على الشاشة</h2>
+              }`}>{t("putFingers")}</h2>
               <p className={`mb-6 ${
                 isDarkMode ? 'text-white/70' : 'text-gray-600'
-              }`}>يجب أن يضع لاعب واحد على الأقل إصبعه على الشاشة</p>
+              }`}>{t("minPlayer")}</p>
               <div className={`flex items-center justify-center gap-4 text-sm ${
                 isDarkMode ? 'text-white/60' : 'text-gray-500'
               }`}>
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  <span>1+ لاعبين</span>
+                  <span>{t("playersCount")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4" />
-                  <span>تحديات جريئة</span>
+                  <span>{t("boldChallenges")}</span>
                 </div>
               </div>
             </div>
@@ -213,14 +273,14 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
               : 'bg-white/95 border-gray-200'
           }`}>
             <div className="p-8 text-center">
-              <div className="text-6xl mb-6">⏰</div>
+              <Timer className="w-14 h-14 mx-auto mb-6 text-amber-500" strokeWidth={1.5} />
               <h2 className={`text-3xl font-bold mb-4 ${
                 isDarkMode ? 'text-white' : 'text-gray-800'
               }`}>{countdown}</h2>
-              <p className={isDarkMode ? 'text-white/70' : 'text-gray-600'}>جاري الاختيار...</p>
+              <p className={isDarkMode ? 'text-white/70' : 'text-gray-600'}>{t("selecting")}</p>
               <div className={`mt-4 text-sm ${
                 isDarkMode ? 'text-white/60' : 'text-gray-500'
-              }`}>تم اكتشاف {touches.length} أصابع</div>
+              }`}>{t("detected")} {touches.length} {t("fingers")}</div>
             </div>
           </div>
         )}
@@ -232,15 +292,15 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
               : 'bg-white/95 border-gray-200'
           }`}>
             <div className="p-8 text-center">
-              <div className="text-6xl mb-6">🎯</div>
+              <Target className="w-14 h-14 mx-auto mb-6 text-amber-500" strokeWidth={1.5} />
               <h2 className={`text-2xl font-bold mb-4 ${
                 isDarkMode ? 'text-white' : 'text-gray-800'
-              }`}>تم الاختيار!</h2>
+              }`}>{t("selected")}</h2>
               <div
                 className="w-16 h-16 rounded-full mx-auto mb-4 animate-pulse shadow-lg"
                 style={{ backgroundColor: touches[selectedFinger]?.color }}
               ></div>
-              <p className={isDarkMode ? 'text-white/70' : 'text-gray-600'}>الإصبع المختار هو الإصبع الملون</p>
+              <p className={isDarkMode ? 'text-white/70' : 'text-gray-600'}>{t("selectedColor")}</p>
             </div>
           </div>
         )}
@@ -253,8 +313,8 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
                 : 'bg-gradient-to-br from-red-400 to-pink-400'
             }`}>
               <div className="p-8 text-center">
-                <div className="text-6xl mb-6 animate-bounce">🔥</div>
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">تحديك الجريء!</h2>
+                <Flame className="w-14 h-14 mx-auto mb-6 animate-bounce text-white" strokeWidth={1.5} />
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">{t("yourChallenge")}</h2>
                 <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-6 min-h-[120px] flex items-center justify-center">
                   <p className="text-white text-base md:text-lg leading-relaxed font-medium">{currentChallenge}</p>
                 </div>
@@ -267,7 +327,7 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
                         : 'bg-white text-red-600 hover:bg-red-50 hover:scale-105'
                     }`}
                   >
-                    لعبة جديدة
+                    {t("newGame")}
                   </button>
                   <button
                     onClick={() => setGameState("waiting")}
@@ -277,7 +337,7 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
                         : 'bg-black/20 text-white hover:bg-black/30 border-2 border-white'
                     }`}
                   >
-                    إغلاق
+                    {t("close")}
                   </button>
                 </div>
               </div>
@@ -328,9 +388,9 @@ export default function FingerSelectionGame({ isMobile, setCurrentGame, isDarkMo
               <div className={`text-center ${
                 isDarkMode ? 'text-white/60' : 'text-gray-600'
               }`}>
-                <div className="text-4xl mb-4">👋</div>
-                <p className="text-lg font-medium">ضعوا أصابعكم هنا</p>
-                <p className="text-sm mt-2">أو انقر بالماوس للتجربة</p>
+                <Hand className="w-10 h-10 mx-auto mb-4" strokeWidth={1.5} />
+                <p className="text-lg font-medium">{t("touchHere")}</p>
+                <p className="text-sm mt-2">{t("mouseHint")}</p>
               </div>
             </div>
           )}

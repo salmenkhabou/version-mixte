@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { RotateCcw, Trophy, Clock, Zap, ArrowLeft, Coffee, Users, UserPlus, X, Crown, Award } from "lucide-react";
+import { RotateCcw, Trophy, Clock, Zap, ArrowLeft, Coffee, Users, UserPlus, X, Crown, Award, Brain, Hand, CircleHelp, Target } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getTranslation } from "../../translations/gameTranslations";
 import LanguageSelector from "../LanguageSelector";
@@ -136,45 +136,6 @@ export default function CoffeeMemoryGame({ isMobile, setCurrentView, isDarkMode 
     const card = cards.find((c) => c.id === cardId);
     if (!card || card.isFlipped || card.isMatched || flippedCards.length >= 2) return;
 
-  const addFriend = () => {
-    if (!newFriendName.trim()) return;
-    
-    const newFriend = {
-      id: Date.now(),
-      name: newFriendName.trim(),
-      gamesPlayed: 0,
-      bestScore: null,
-      totalTime: 0,
-      createdAt: new Date().toISOString()
-    };
-    
-    setFriends([...friends, newFriend]);
-    setNewFriendName("");
-    setShowAddFriend(false);
-  };
-
-  const selectPlayer = (friend) => {
-    setCurrentPlayer(friend);
-    setShowLeaderboard(false);
-  };
-
-  const removeFriend = (friendId) => {
-    setFriends(friends.filter(f => f.id !== friendId));
-    if (currentPlayer?.id === friendId) {
-      setCurrentPlayer(null);
-    }
-  };
-
-  const getSortedLeaderboard = () => {
-    return [...friends]
-      .filter(f => f.gamesPlayed > 0)
-      .sort((a, b) => {
-        if (!a.bestScore) return 1;
-        if (!b.bestScore) return -1;
-        return a.bestScore - b.bestScore;
-      });
-  };
-
     const newFlipped = [...flippedCards, cardId];
     setFlippedCards(newFlipped);
     setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, isFlipped: true } : c)));
@@ -203,146 +164,185 @@ export default function CoffeeMemoryGame({ isMobile, setCurrentView, isDarkMode 
     }
   };
 
+  const addFriend = () => {
+    if (!newFriendName.trim()) return;
+
+    const newFriend = {
+      id: Date.now(),
+      name: newFriendName.trim(),
+      gamesPlayed: 0,
+      bestScore: null,
+      totalTime: 0,
+      createdAt: new Date().toISOString(),
+    };
+
+    setFriends([...friends, newFriend]);
+    setNewFriendName("");
+    setShowAddFriend(false);
+  };
+
+  const selectPlayer = (friend) => {
+    setCurrentPlayer(friend);
+    setShowLeaderboard(false);
+  };
+
+  const removeFriend = (friendId) => {
+    setFriends(friends.filter((f) => f.id !== friendId));
+    if (currentPlayer?.id === friendId) {
+      setCurrentPlayer(null);
+    }
+  };
+
+  const getSortedLeaderboard = () => {
+    return [...friends]
+      .filter((f) => f.gamesPlayed > 0)
+      .sort((a, b) => {
+        if (!a.bestScore) return 1;
+        if (!b.bestScore) return -1;
+        return a.bestScore - b.bestScore;
+      });
+  };
+
   const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   // === GAME MENU ===
   if (currentGame === "menu") {
+    const gameItems = [
+      {
+        key: "memory",
+        icon: Brain,
+        title: t('memoryGame'),
+        description: t('memoryGameDesc'),
+      },
+      {
+        key: "fingerGame",
+        icon: Hand,
+        title: t('fingerSelection'),
+        description: t('fingerSelectionDesc'),
+      },
+      {
+        key: "footballChallenge",
+        icon: Trophy,
+        title: t('footballChallenge'),
+        description: t('footballChallengeDesc'),
+      },
+      {
+        key: "firstDate",
+        icon: Users,
+        title: t('firstDateGame'),
+        description: t('firstDateGameDesc'),
+      },
+      {
+        key: "truthOrDare",
+        icon: CircleHelp,
+        title: t('truthOrDare'),
+        description: t('truthOrDareDesc'),
+      },
+      {
+        key: "threeThings",
+        icon: Target,
+        title: t('nameThreeThings'),
+        description: t('nameThreeThingsDesc'),
+      },
+    ];
+
     return (
-      <div className={`${isMobile ? "px-6 pt-8 pb-24" : "px-8 pt-12 pb-8"} min-h-screen transition-colors ${
-        isDarkMode ? 'bg-black' : 'bg-white'
-      }`}>
-        <div className="flex items-center justify-between mb-8 sm:mb-12">
-          <div>
-            <h1 className={`font-bold ${isMobile ? "text-2xl" : "text-4xl"} mb-2 transition-colors ${
-              isDarkMode ? 'text-white' : 'text-black'
-            }`}>Coffee Games 🎮</h1>
-            <p className={`transition-colors ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>{t('selectGame')}</p>
-          </div>
-          <div className="flex items-center gap-4">
-            
-            <LanguageSelector isDarkMode={isDarkMode} />
-          </div>
-        </div>
+      <div className='w-full'>
+        <section className='mb-24 sm:mb-28 lg:mb-32'>
+          <div className='max-w-5xl mx-auto text-center'>
+            <div className='mb-8 sm:mb-10 lg:mb-12'>
+              <div className='inline-flex items-center gap-3 sm:gap-4'>
+                <div className='h-px w-8 sm:w-12 bg-amber-500'></div>
+                <span className='text-amber-500 text-[9px] sm:text-[10px] tracking-[0.5em] font-light uppercase'>
+                  Brew Games
+                </span>
+                <div className='h-px w-8 sm:w-12 bg-amber-500'></div>
+              </div>
+            </div>
 
-        <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 lg:grid-cols-3"} gap-6 sm:gap-8`}>
-          {/* Memory Game */}
-          <div
-            onClick={() => setCurrentGame("memory")}
-            className={`group p-6 sm:p-8 rounded-2xl shadow-lg cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl border ${
-              isDarkMode 
-                ? 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20' 
-                : 'bg-gradient-to-br from-blue-100 to-cyan-100 border-blue-200 hover:border-blue-300'
-            }`}
-          >
-            <div className="text-6xl mb-4">🧠</div>
-            <h3 className={`font-bold text-xl sm:text-2xl mb-2 transition-colors ${
-              isDarkMode ? 'text-white' : 'text-gray-800'
-            }`}>{t('memoryGame')}</h3>
-            <p className={`text-sm transition-colors ${
-              isDarkMode ? 'text-white/60' : 'text-gray-600'
-            }`}>{t('memoryGameDesc')}</p>
-          </div>
+            <div className='mb-12 sm:mb-16 lg:mb-20'>
+              <h1 className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-[9rem] font-extralight leading-[0.9] tracking-tighter transition-colors ${
+                isDarkMode ? 'text-white' : 'text-black'
+              }`}>
+                Coffee
+                <br />
+                <span className='text-amber-500'>Games</span>
+              </h1>
+            </div>
 
-          {/* لعبة اختيار الإصبع */}
-          <div
-            onClick={() => setCurrentGame("fingerGame")}
-            className={`group p-6 sm:p-8 rounded-2xl shadow-lg cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl border ${
-              isDarkMode 
-                ? 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20' 
-                : 'bg-gradient-to-br from-purple-100 to-pink-100 border-purple-200 hover:border-purple-300'
-            }`}
-          >
-            <div className="text-6xl mb-4">☝️</div>
-            <h3 className={`font-bold text-xl sm:text-2xl mb-2 transition-colors ${
-              isDarkMode ? 'text-white' : 'text-gray-800'
-            }`}>{t('fingerSelection')}</h3>
-            <p className={`text-sm transition-colors ${
-              isDarkMode ? 'text-white/60' : 'text-gray-600'
-            }`}>{t('fingerSelectionDesc')}</p>
-          </div>
+            <div className='mb-10 sm:mb-12 lg:mb-14'>
+              <p className={`text-base sm:text-lg md:text-xl lg:text-2xl font-light leading-relaxed max-w-3xl mx-auto mb-4 sm:mb-6 px-4 transition-colors ${
+                isDarkMode ? 'text-white/50' : 'text-black/60'
+              }`}>
+                Play together. Laugh together. Make every cup more memorable.
+              </p>
+              <p className={`text-sm sm:text-base md:text-lg lg:text-xl font-light leading-relaxed max-w-3xl mx-auto px-4 transition-colors ${
+                isDarkMode ? 'text-white/30' : 'text-black/40'
+              }`}>
+                {t('selectGame')}
+              </p>
+            </div>
 
-          {/* تحدي كرة القدم */}
-          <div
-            onClick={() => setCurrentGame("footballChallenge")}
-            className={`group p-6 sm:p-8 rounded-2xl shadow-lg cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl border ${
-              isDarkMode 
-                ? 'bg-green-500/10 border-green-500/20 hover:bg-green-500/20' 
-                : 'bg-gradient-to-br from-green-100 to-emerald-100 border-green-200 hover:border-green-300'
-            }`}
-          >
-            <div className="text-6xl mb-4">⚽</div>
-            <h3 className={`font-bold text-xl sm:text-2xl mb-2 transition-colors ${
-              isDarkMode ? 'text-white' : 'text-gray-800'
-            }`}>{t('footballChallenge')}</h3>
-            <p className={`text-sm transition-colors ${
-              isDarkMode ? 'text-white/60' : 'text-gray-600'
-            }`}>{t('footballChallengeDesc')}</p>
+            <div className='flex justify-center'>
+              <LanguageSelector isDarkMode={isDarkMode} />
+            </div>
           </div>
+        </section>
 
-          {/* لعبة الموعد الأول */}
-          <div
-            onClick={() => setCurrentGame("firstDate")}
-            className={`group p-6 sm:p-8 rounded-2xl shadow-lg cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl border ${
-              isDarkMode 
-                ? 'bg-pink-500/10 border-pink-500/20 hover:bg-pink-500/20' 
-                : 'bg-gradient-to-br from-pink-100 to-rose-100 border-pink-200 hover:border-pink-300'
-            }`}
-          >
-            <div className="text-6xl mb-4">💕</div>
-            <h3 className={`font-bold text-xl sm:text-2xl mb-2 transition-colors ${
-              isDarkMode ? 'text-white' : 'text-gray-800'
-            }`}>{t('firstDateGame')}</h3>
-            <p className={`text-sm transition-colors ${
-              isDarkMode ? 'text-white/60' : 'text-gray-600'
-            }`}>{t('firstDateGameDesc')}</p>
-          </div>
+        <section>
+          <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2 lg:grid-cols-3"} gap-6 sm:gap-8`}>
+            {gameItems.map((game) => {
+              const Icon = game.icon;
+              return (
+              <button
+                key={game.key}
+                onClick={() => setCurrentGame(game.key)}
+                className={`group relative text-left p-6 sm:p-8 border transition-all duration-500 hover:-translate-y-1.5 ${
+                  isDarkMode
+                    ? 'bg-white/[0.02] border-white/10 hover:bg-white/[0.06] hover:border-amber-500/50'
+                    : 'bg-black/[0.02] border-black/10 hover:bg-black/[0.04] hover:border-amber-600/40'
+                }`}
+              >
+                <div className='mb-5 sm:mb-6 flex items-center justify-between'>
+                  <Icon className={`w-10 h-10 sm:w-12 sm:h-12 ${isDarkMode ? 'text-white/85' : 'text-black/80'}`} strokeWidth={1.5} />
+                  <span className='text-[9px] sm:text-[10px] tracking-[0.35em] uppercase text-amber-500 font-light'>
+                    Play
+                  </span>
+                </div>
 
-          {/* Action Vérité */}
-          <div
-            onClick={() => setCurrentGame("truthOrDare")}
-            className={`group p-6 sm:p-8 rounded-2xl shadow-lg cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl border ${
-              isDarkMode 
-                ? 'bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20' 
-                : 'bg-gradient-to-br from-yellow-100 to-orange-100 border-yellow-200 hover:border-yellow-300'
-            }`}
-          >
-            <div className="text-6xl mb-4">🎭</div>
-            <h3 className={`font-bold text-xl sm:text-2xl mb-2 transition-colors ${
-              isDarkMode ? 'text-white' : 'text-gray-800'
-            }`}>{t('truthOrDare')}</h3>
-            <p className={`text-sm transition-colors ${
-              isDarkMode ? 'text-white/60' : 'text-gray-600'
-            }`}>{t('truthOrDareDesc')}</p>
-          </div>
+                <h3 className={`font-light text-xl sm:text-2xl mb-3 tracking-tight transition-colors ${
+                  isDarkMode ? 'text-white' : 'text-black'
+                }`}>
+                  {game.title}
+                </h3>
 
-          {/* سمي 3 حاجات */}
-          <div
-            onClick={() => setCurrentGame("threeThings")}
-            className={`group p-6 sm:p-8 rounded-2xl shadow-lg cursor-pointer hover:scale-105 transition-all duration-300 hover:shadow-2xl border ${
-              isDarkMode 
-                ? 'bg-red-500/10 border-red-500/20 hover:bg-red-500/20' 
-                : 'bg-gradient-to-br from-red-100 to-pink-100 border-red-200 hover:border-red-300'
-            }`}
-          >
-            <div className="text-6xl mb-4">🔢</div>
-            <h3 className={`font-bold text-xl sm:text-2xl mb-2 transition-colors ${
-              isDarkMode ? 'text-white' : 'text-gray-800'
-            }`}>{t('nameThreeThings')}</h3>
-            <p className={`text-sm transition-colors ${
-              isDarkMode ? 'text-white/60' : 'text-gray-600'
-            }`}>{t('nameThreeThingsDesc')}</p>
+                <p className={`text-sm leading-relaxed font-light transition-colors ${
+                  isDarkMode ? 'text-white/55' : 'text-black/55'
+                }`}>
+                  {game.description}
+                </p>
+
+                <div className='mt-6 sm:mt-8'>
+                  <span className='inline-flex items-center gap-2 text-[10px] sm:text-xs tracking-[0.28em] uppercase text-amber-500 font-light'>
+                    Start Game
+                    <Zap className='w-3.5 h-3.5 group-hover:translate-x-1 transition-transform duration-300' />
+                  </span>
+                </div>
+              </button>
+              );
+            })}
           </div>
-        </div>
+        </section>
       </div>
     );
   }
 
   // === OTHER GAMES ===
-  if (currentGame === "fingerGame") return <FingerSelectionGame isMobile={isMobile} setCurrentGame={setCurrentGame} />;
-  if (currentGame === "footballChallenge") return <FootballChallengeGame isMobile={isMobile} setCurrentGame={setCurrentGame} />;
-  if (currentGame === "truthOrDare") return <CoffeeTruthOrDare isMobile={isMobile} setCurrentGame={setCurrentGame} coffeeBeans={coffeeBeans} setCoffeeBeans={setCoffeeBeans} />;
-  if (currentGame === "firstDate") return <FirstDateGame isMobile={isMobile} setCurrentGame={setCurrentGame} />;
-  if (currentGame === "threeThings") return <CoffeeNameThreeThings isMobile={isMobile} setCurrentGame={setCurrentGame} coffeeBeans={coffeeBeans} setCoffeeBeans={setCoffeeBeans} />;
+  if (currentGame === "fingerGame") return <FingerSelectionGame isMobile={isMobile} setCurrentGame={setCurrentGame} isDarkMode={isDarkMode} />;
+  if (currentGame === "footballChallenge") return <FootballChallengeGame isMobile={isMobile} setCurrentGame={setCurrentGame} isDarkMode={isDarkMode} />;
+  if (currentGame === "truthOrDare") return <CoffeeTruthOrDare isMobile={isMobile} setCurrentGame={setCurrentGame} coffeeBeans={coffeeBeans} setCoffeeBeans={setCoffeeBeans} isDarkMode={isDarkMode} />;
+  if (currentGame === "firstDate") return <FirstDateGame isMobile={isMobile} setCurrentGame={setCurrentGame} isDarkMode={isDarkMode} />;
+  if (currentGame === "threeThings") return <CoffeeNameThreeThings isMobile={isMobile} setCurrentGame={setCurrentGame} coffeeBeans={coffeeBeans} setCoffeeBeans={setCoffeeBeans} isDarkMode={isDarkMode} />;
 
   // === MEMORY GAME ===
   return (
@@ -779,7 +779,7 @@ export default function CoffeeMemoryGame({ isMobile, setCurrentView, isDarkMode 
             isDarkMode ? 'bg-zinc-900 border border-white/10' : 'bg-white'
           }`}>
             <div className="text-center">
-              <div className="text-7xl mb-4">🎉</div>
+              <Award className={`w-14 h-14 mx-auto mb-4 ${isDarkMode ? 'text-amber-500' : 'text-amber-600'}`} strokeWidth={1.5} />
               <h2 className={`text-3xl font-bold mb-2 transition-colors ${
                 isDarkMode ? 'text-white' : 'text-gray-800'
               }`}>{t('congratulations')}</h2>

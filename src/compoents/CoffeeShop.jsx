@@ -86,7 +86,17 @@ export default function Component() {
 
   const launchARExperience = async (coffeeId) => {
     const sharedData = window.AR_SHARED_DATA || {};
-    const coffeeToDishMap = sharedData.coffeeToDishMap || {};
+    const fallbackMap = {
+      1: 'coffee',
+      2: 'latte',
+      3: 'coffee',
+      4: 'latte',
+      5: 'latte',
+      6: 'coffee',
+      7: 'latte',
+      8: 'coffee',
+    };
+    const coffeeToDishMap = sharedData.coffeeToDishMap || fallbackMap;
     const defaultDishId = sharedData.defaultDishId || 'coffee';
     const selectedDish = coffeeToDishMap[coffeeId] || defaultDishId;
 
@@ -97,7 +107,7 @@ export default function Component() {
 
     try {
       await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
+        video: { facingMode: 'environment' },
       });
     } catch (error) {
       alert('Camera permission is required to start AR.');
@@ -504,6 +514,25 @@ export default function Component() {
               </span>
             </button>
 
+            {/* AR */}
+            <button
+              onClick={() => launchARExperience(3)}
+              className='flex flex-col items-center gap-1 min-w-[60px] transition-all duration-300'
+            >
+              <Play
+                size={24}
+                strokeWidth={1.5}
+                className={`transition-colors duration-300 ${
+                  isDarkMode ? 'text-white/40 hover:text-amber-500' : 'text-black/40 hover:text-amber-600'
+                }`}
+              />
+              <span className={`text-[10px] font-light tracking-wider ${
+                isDarkMode ? 'text-white/40' : 'text-black/40'
+              }`}>
+                AR
+              </span>
+            </button>
+
             {/* Favorites */}
             <button 
               onClick={() => setCurrentView('favorites')}
@@ -536,25 +565,6 @@ export default function Component() {
                   : isDarkMode ? 'text-white/40' : 'text-black/40'
               }`}>
                 SAVED
-              </span>
-            </button>
-
-            {/* AR */}
-            <button
-              onClick={() => launchARExperience(3)}
-              className='flex flex-col items-center gap-1 min-w-[60px] transition-all duration-300'
-            >
-              <Play
-                size={24}
-                strokeWidth={1.5}
-                className={`transition-colors duration-300 ${
-                  isDarkMode ? 'text-white/40 hover:text-amber-500' : 'text-black/40 hover:text-amber-600'
-                }`}
-              />
-              <span className={`text-[10px] font-light tracking-wider ${
-                isDarkMode ? 'text-white/40' : 'text-black/40'
-              }`}>
-                AR
               </span>
             </button>
 
@@ -1436,73 +1446,12 @@ function ShopContent({ isMobile, coffeeItems, categories, favorites, toggleFavor
 
 function GameContent({ isMobile, isDarkMode }) {
   return (
-    <div className={`min-h-screen transition-colors ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
-      {/* Hero Section */}
-      <section className={`pt-32 sm:pt-36 md:pt-40 pb-16 sm:pb-20 md:pb-24 px-6 sm:px-8 md:px-12 lg:px-16 border-b transition-colors ${
-        isDarkMode ? 'border-white/10' : 'border-black/10'
-      }`}>
-        <div className='max-w-7xl mx-auto text-center'>
-          {/* Icon */}
-          <div className='flex justify-center mb-6 sm:mb-8'>
-            <div className={`w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all ${
-              isDarkMode ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-amber-600/10 border border-amber-600/20'
-            }`}>
-              <Gamepad2 className={`transition-colors ${isDarkMode ? 'text-amber-500' : 'text-amber-600'}`} size={isMobile ? 32 : 48} strokeWidth={1.5} />
-            </div>
-          </div>
-
-          {/* Title */}
-          <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight mb-4 sm:mb-6 transition-colors ${
-            isDarkMode ? 'text-white' : 'text-black'
-          }`}>
-            Coffee Games
-          </h1>
-
-          {/* Subtitle */}
-          <p className={`text-sm sm:text-base md:text-lg font-light tracking-wide max-w-2xl mx-auto mb-8 sm:mb-10 transition-colors ${
-            isDarkMode ? 'text-white/60' : 'text-black/60'
-          }`}>
-            Challenge yourself with our collection of coffee-themed games. Test your memory, knowledge, and have fun!
-          </p>
-
-          {/* Stats */}
-          <div className='flex items-center justify-center gap-8 sm:gap-12 md:gap-16'>
-            <div className='text-center'>
-              <div className={`text-2xl sm:text-3xl md:text-4xl font-light mb-1 sm:mb-2 transition-colors ${
-                isDarkMode ? 'text-amber-500' : 'text-amber-600'
-              }`}>5+</div>
-              <div className={`text-xs sm:text-sm font-light tracking-wider transition-colors ${
-                isDarkMode ? 'text-white/40' : 'text-black/50'
-              }`}>GAMES</div>
-            </div>
-            <div className={`w-px h-12 sm:h-16 transition-colors ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`}></div>
-            <div className='text-center'>
-              <div className={`text-2xl sm:text-3xl md:text-4xl font-light mb-1 sm:mb-2 transition-colors ${
-                isDarkMode ? 'text-amber-500' : 'text-amber-600'
-              }`}>∞</div>
-              <div className={`text-xs sm:text-sm font-light tracking-wider transition-colors ${
-                isDarkMode ? 'text-white/40' : 'text-black/50'
-              }`}>FUN</div>
-            </div>
-            <div className={`w-px h-12 sm:h-16 transition-colors ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`}></div>
-            <div className='text-center'>
-              <div className={`text-2xl sm:text-3xl md:text-4xl font-light mb-1 sm:mb-2 transition-colors ${
-                isDarkMode ? 'text-amber-500' : 'text-amber-600'
-              }`}>100%</div>
-              <div className={`text-xs sm:text-sm font-light tracking-wider transition-colors ${
-                isDarkMode ? 'text-white/40' : 'text-black/50'
-              }`}>FREE</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Games Section */}
-      <section className='py-16 sm:py-20 md:py-24 px-6 sm:px-8 md:px-12 lg:px-16'>
-        <div className='max-w-7xl mx-auto'>
+    <div className='w-full min-h-screen bg-[var(--bg-primary)] overflow-x-hidden transition-colors duration-300'>
+      <div className='w-full pt-32 sm:pt-36 lg:pt-40 pb-16 sm:pb-24 lg:pb-40'>
+        <div className='max-w-[1400px] mx-auto px-4 sm:px-8 md:px-12 lg:px-16'>
           <CoffeeMemoryGame isMobile={isMobile} isDarkMode={isDarkMode} />
         </div>
-      </section>
+      </div>
     </div>
   );
 }
