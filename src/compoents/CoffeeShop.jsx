@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import CoffeeMemoryGame from './game/CoffeeMemoryGame';
 import { useMobile } from './use-mobile';
+import { ADMIN_STORAGE_KEYS, loadCoffeeItems, loadSiteSettings } from '../utils/adminStorage';
 
 export default function Component() {
   const isMobile = useMobile();
@@ -43,6 +44,7 @@ export default function Component() {
     }
   });
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [siteSettings, setSiteSettings] = useState(() => loadSiteSettings());
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,7 +89,41 @@ export default function Component() {
     setIsDarkMode(!isDarkMode);
   };
 
+  useEffect(() => {
+    const syncAdminConfig = (event) => {
+      if (!event?.key || event.key === ADMIN_STORAGE_KEYS.settings) {
+        setSiteSettings(loadSiteSettings());
+      }
+
+      if (!event?.key || event.key === ADMIN_STORAGE_KEYS.items) {
+        setManagedCoffeeItems(loadCoffeeItems(coffeeItems));
+      }
+    };
+
+    window.addEventListener('storage', syncAdminConfig);
+    window.addEventListener('focus', syncAdminConfig);
+
+    // Sync once when page is mounted.
+    setSiteSettings(loadSiteSettings());
+
+    return () => {
+      window.removeEventListener('storage', syncAdminConfig);
+      window.removeEventListener('focus', syncAdminConfig);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!siteSettings.showGames && currentView === 'game') {
+      setCurrentView('shop');
+    }
+  }, [siteSettings.showGames, currentView]);
+
   const launchARExperience = async (coffeeId) => {
+    if (!siteSettings.showAR) {
+      alert('AR is currently disabled by admin.');
+      return;
+    }
+
     const sharedData = window.AR_SHARED_DATA || {};
     const fallbackMap = {
       1: 'coffee',
@@ -268,12 +304,15 @@ export default function Component() {
     },
   ];
 
+  const [managedCoffeeItems, setManagedCoffeeItems] = useState(() => loadCoffeeItems(coffeeItems));
+  const effectiveCoffeeItems = managedCoffeeItems.length > 0 ? managedCoffeeItems : coffeeItems;
+
   const categories = [
-    { name: 'All', icon: '☕', count: 8 },
-    { name: 'Trending', icon: '🔥', count: 4 },
-    { name: 'New', icon: '✨', count: 3 },
-    { name: 'Premium', icon: '💎', count: 3 },
-    { name: 'Iced', icon: '❄️', count: 1 },
+    { name: 'All', icon: '☕', count: effectiveCoffeeItems.length },
+    { name: 'Trending', icon: '🔥', count: effectiveCoffeeItems.filter((item) => item.isTrending).length },
+    { name: 'New', icon: '✨', count: effectiveCoffeeItems.filter((item) => item.isNew).length },
+    { name: 'Premium', icon: '💎', count: effectiveCoffeeItems.filter((item) => Number(item.price) > 20).length },
+    { name: 'Iced', icon: '❄️', count: effectiveCoffeeItems.filter((item) => String(item.name).toLowerCase().includes('iced')).length },
   ];
 
   return (
@@ -319,19 +358,21 @@ export default function Component() {
                     currentView === 'shop' ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}></span>
                 </button>
-                <button
-                  onClick={() => setCurrentView('game')}
-                  className={`group text-xs tracking-[0.25em] transition-all duration-500 relative font-light uppercase ${
-                    currentView === 'game'
-                      ? isDarkMode ? 'text-white' : 'text-black'
-                      : isDarkMode ? 'text-white/40 hover:text-white/80' : 'text-black/40 hover:text-black/80'
-                  }`}
-                >
-                  Games
-                  <span className={`absolute -bottom-2 left-0 h-px bg-amber-500 transition-all duration-500 ${
-                    currentView === 'game' ? 'w-full' : 'w-0 group-hover:w-full'
-                  }`}></span>
-                </button>
+                {siteSettings.showGames && (
+                  <button
+                    onClick={() => setCurrentView('game')}
+                    className={`group text-xs tracking-[0.25em] transition-all duration-500 relative font-light uppercase ${
+                      currentView === 'game'
+                        ? isDarkMode ? 'text-white' : 'text-black'
+                        : isDarkMode ? 'text-white/40 hover:text-white/80' : 'text-black/40 hover:text-black/80'
+                    }`}
+                  >
+                    Games
+                    <span className={`absolute -bottom-2 left-0 h-px bg-amber-500 transition-all duration-500 ${
+                      currentView === 'game' ? 'w-full' : 'w-0 group-hover:w-full'
+                    }`}></span>
+                  </button>
+                )}
                 <button
                   onClick={() => setCurrentView('about')}
                   className={`group text-xs tracking-[0.25em] transition-all duration-500 relative font-light uppercase ${
@@ -494,33 +535,34 @@ export default function Component() {
               </span>
             </button>
 
-            {/* Games */}
-            <button
-              onClick={() => setCurrentView('game')}
-              className='flex flex-col items-center gap-1 min-w-[60px] transition-all duration-300'
-            >
-              <div className={`relative ${currentView === 'game' ? 'scale-110' : ''}`}>
-                <Gamepad2 
-                  size={24} 
-                  strokeWidth={1.5}
-                  className={`transition-colors duration-300 ${
-                    currentView === 'game'
-                      ? 'text-amber-500'
-                      : isDarkMode ? 'text-white/40' : 'text-black/40'
-                  }`}
-                />
-                {currentView === 'game' && (
-                  <div className='absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full'></div>
-                )}
-              </div>
-              <span className={`text-[10px] font-light tracking-wider transition-colors duration-300 ${
-                currentView === 'game'
-                  ? 'text-amber-500'
-                  : isDarkMode ? 'text-white/40' : 'text-black/40'
-              }`}>
-                GAMES
-              </span>
-            </button>
+            {siteSettings.showGames && (
+              <button
+                onClick={() => setCurrentView('game')}
+                className='flex flex-col items-center gap-1 min-w-[60px] transition-all duration-300'
+              >
+                <div className={`relative ${currentView === 'game' ? 'scale-110' : ''}`}>
+                  <Gamepad2 
+                    size={24} 
+                    strokeWidth={1.5}
+                    className={`transition-colors duration-300 ${
+                      currentView === 'game'
+                        ? 'text-amber-500'
+                        : isDarkMode ? 'text-white/40' : 'text-black/40'
+                    }`}
+                  />
+                  {currentView === 'game' && (
+                    <div className='absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-amber-500 rounded-full'></div>
+                  )}
+                </div>
+                <span className={`text-[10px] font-light tracking-wider transition-colors duration-300 ${
+                  currentView === 'game'
+                    ? 'text-amber-500'
+                    : isDarkMode ? 'text-white/40' : 'text-black/40'
+                }`}>
+                  GAMES
+                </span>
+              </button>
+            )}
 
             {/* Favorites */}
             <button 
@@ -647,22 +689,24 @@ export default function Component() {
                   currentView === 'shop' ? 'w-20 bg-amber-500' : isDarkMode ? 'w-0 bg-white/20 group-hover:w-12' : 'w-0 bg-black/20 group-hover:w-12'
                 }`}></div>
               </button>
-              <button
-                onClick={() => {
-                  setCurrentView('game');
-                  setMenuOpen(false);
-                }}
-                className={`text-3xl font-light tracking-wider transition-all text-left group ${
-                  currentView === 'game'
-                    ? 'text-amber-500'
-                    : isDarkMode ? 'text-white/60' : 'text-black/60'
-                }`}
-              >
-                GAMES
-                <div className={`h-px mt-2 transition-all duration-300 ${
-                  currentView === 'game' ? 'w-20 bg-amber-500' : isDarkMode ? 'w-0 bg-white/20 group-hover:w-12' : 'w-0 bg-black/20 group-hover:w-12'
-                }`}></div>
-              </button>
+              {siteSettings.showGames && (
+                <button
+                  onClick={() => {
+                    setCurrentView('game');
+                    setMenuOpen(false);
+                  }}
+                  className={`text-3xl font-light tracking-wider transition-all text-left group ${
+                    currentView === 'game'
+                      ? 'text-amber-500'
+                      : isDarkMode ? 'text-white/60' : 'text-black/60'
+                  }`}
+                >
+                  GAMES
+                  <div className={`h-px mt-2 transition-all duration-300 ${
+                    currentView === 'game' ? 'w-20 bg-amber-500' : isDarkMode ? 'w-0 bg-white/20 group-hover:w-12' : 'w-0 bg-black/20 group-hover:w-12'
+                  }`}></div>
+                </button>
+              )}
               <button
                 onClick={() => {
                   setCurrentView('about');
@@ -733,17 +777,18 @@ export default function Component() {
       {currentView === 'shop' ? (
         <ShopContent
           isMobile={isMobile}
-          coffeeItems={coffeeItems}
+          coffeeItems={effectiveCoffeeItems}
           categories={categories}
           favorites={favorites}
           toggleFavorite={toggleFavorite}
           isDarkMode={isDarkMode}
           onLaunchAR={launchARExperience}
+          showAR={siteSettings.showAR}
         />
       ) : currentView === 'favorites' ? (
         <FavoritesContent
           isMobile={isMobile}
-          coffeeItems={coffeeItems}
+          coffeeItems={effectiveCoffeeItems}
           favorites={favorites}
           toggleFavorite={toggleFavorite}
           clearAllFavorites={clearAllFavorites}
@@ -753,8 +798,19 @@ export default function Component() {
         <AboutContent isMobile={isMobile} isDarkMode={isDarkMode} />
       ) : currentView === 'contact' ? (
         <ContactContent isMobile={isMobile} isDarkMode={isDarkMode} />
-      ) : (
+      ) : currentView === 'game' && siteSettings.showGames ? (
         <GameContent isMobile={isMobile} isDarkMode={isDarkMode} />
+      ) : (
+        <ShopContent
+          isMobile={isMobile}
+          coffeeItems={effectiveCoffeeItems}
+          categories={categories}
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
+          isDarkMode={isDarkMode}
+          onLaunchAR={launchARExperience}
+          showAR={siteSettings.showAR}
+        />
       )}
     </div>
   );
@@ -1163,7 +1219,7 @@ function FavoritesContent({ isMobile, coffeeItems, favorites, toggleFavorite, cl
   );
 }
 
-function ShopContent({ isMobile, coffeeItems, categories, favorites, toggleFavorite, isDarkMode, onLaunchAR }) {
+function ShopContent({ isMobile, coffeeItems, categories, favorites, toggleFavorite, isDarkMode, onLaunchAR, showAR }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [hoveredCard, setHoveredCard] = useState(null);
 
@@ -1424,7 +1480,7 @@ function ShopContent({ isMobile, coffeeItems, categories, favorites, toggleFavor
                       {!isMobile && 'Add to Cart'}
                       {isMobile && 'Add'}
                     </button>
-                    {!isMobile && (
+                    {!isMobile && showAR && (
                       <button
                         onClick={() => onLaunchAR(item.id)}
                         className={`w-full px-6 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-xs tracking-[0.3em] transition-all duration-300 font-light uppercase flex items-center justify-center gap-2 border ${
@@ -1438,7 +1494,7 @@ function ShopContent({ isMobile, coffeeItems, categories, favorites, toggleFavor
                       </button>
                     )}
                   </div>
-                  {isMobile && (
+                  {isMobile && showAR && (
                     <button
                       onClick={() => onLaunchAR(item.id)}
                       className={`mt-2 px-3 py-2 text-[9px] tracking-[0.3em] transition-all duration-300 font-light uppercase flex items-center justify-center gap-2 border ${
