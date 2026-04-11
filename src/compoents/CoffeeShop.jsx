@@ -15,6 +15,9 @@ import {
   ChevronRight,
   Play,
   Gamepad2,
+  Mail,
+  Phone,
+  MapPin,
   Instagram,
   Twitter,
   Facebook,
@@ -330,25 +333,30 @@ export default function Component() {
                   }`}></span>
                 </button>
                 <button
-                  onClick={() => launchARExperience(3)}
+                  onClick={() => setCurrentView('about')}
                   className={`group text-xs tracking-[0.25em] transition-all duration-500 relative font-light uppercase ${
-                    isDarkMode ? 'text-white/40 hover:text-white/80' : 'text-black/40 hover:text-black/80'
+                    currentView === 'about'
+                      ? isDarkMode ? 'text-white' : 'text-black'
+                      : isDarkMode ? 'text-white/40 hover:text-white/80' : 'text-black/40 hover:text-black/80'
                   }`}
                 >
-                  AR
-                  <span className='absolute -bottom-2 left-0 w-0 h-px bg-amber-500 transition-all duration-500 group-hover:w-full'></span>
-                </button>
-                <button className={`group text-xs tracking-[0.25em] transition-all duration-500 relative font-light uppercase ${
-                  isDarkMode ? 'text-white/40 hover:text-white/80' : 'text-black/40 hover:text-black/80'
-                }`}>
                   About
-                  <span className='absolute -bottom-2 left-0 w-0 h-px bg-amber-500 transition-all duration-500 group-hover:w-full'></span>
+                  <span className={`absolute -bottom-2 left-0 h-px bg-amber-500 transition-all duration-500 ${
+                    currentView === 'about' ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}></span>
                 </button>
-                <button className={`group text-xs tracking-[0.25em] transition-all duration-500 relative font-light uppercase ${
-                  isDarkMode ? 'text-white/40 hover:text-white/80' : 'text-black/40 hover:text-black/80'
-                }`}>
+                <button
+                  onClick={() => setCurrentView('contact')}
+                  className={`group text-xs tracking-[0.25em] transition-all duration-500 relative font-light uppercase ${
+                    currentView === 'contact'
+                      ? isDarkMode ? 'text-white' : 'text-black'
+                      : isDarkMode ? 'text-white/40 hover:text-white/80' : 'text-black/40 hover:text-black/80'
+                  }`}
+                >
                   Contact
-                  <span className='absolute -bottom-2 left-0 w-0 h-px bg-amber-500 transition-all duration-500 group-hover:w-full'></span>
+                  <span className={`absolute -bottom-2 left-0 h-px bg-amber-500 transition-all duration-500 ${
+                    currentView === 'contact' ? 'w-full' : 'w-0 group-hover:w-full'
+                  }`}></span>
                 </button>
               </div>
 
@@ -514,25 +522,6 @@ export default function Component() {
               </span>
             </button>
 
-            {/* AR */}
-            <button
-              onClick={() => launchARExperience(3)}
-              className='flex flex-col items-center gap-1 min-w-[60px] transition-all duration-300'
-            >
-              <Play
-                size={24}
-                strokeWidth={1.5}
-                className={`transition-colors duration-300 ${
-                  isDarkMode ? 'text-white/40 hover:text-amber-500' : 'text-black/40 hover:text-amber-600'
-                }`}
-              />
-              <span className={`text-[10px] font-light tracking-wider ${
-                isDarkMode ? 'text-white/40' : 'text-black/40'
-              }`}>
-                AR
-              </span>
-            </button>
-
             {/* Favorites */}
             <button 
               onClick={() => setCurrentView('favorites')}
@@ -676,16 +665,34 @@ export default function Component() {
               </button>
               <button
                 onClick={() => {
-                  launchARExperience(3);
+                  setCurrentView('about');
                   setMenuOpen(false);
                 }}
                 className={`text-3xl font-light tracking-wider transition-all text-left group ${
-                  isDarkMode ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'
+                  currentView === 'about'
+                    ? 'text-amber-500'
+                    : isDarkMode ? 'text-white/60' : 'text-black/60'
                 }`}
               >
-                AR EXPERIENCE
+                ABOUT
                 <div className={`h-px mt-2 transition-all duration-300 ${
-                  isDarkMode ? 'w-0 bg-white/20 group-hover:w-12' : 'w-0 bg-black/20 group-hover:w-12'
+                  currentView === 'about' ? 'w-20 bg-amber-500' : isDarkMode ? 'w-0 bg-white/20 group-hover:w-12' : 'w-0 bg-black/20 group-hover:w-12'
+                }`}></div>
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentView('contact');
+                  setMenuOpen(false);
+                }}
+                className={`text-3xl font-light tracking-wider transition-all text-left group ${
+                  currentView === 'contact'
+                    ? 'text-amber-500'
+                    : isDarkMode ? 'text-white/60' : 'text-black/60'
+                }`}
+              >
+                CONTACT
+                <div className={`h-px mt-2 transition-all duration-300 ${
+                  currentView === 'contact' ? 'w-20 bg-amber-500' : isDarkMode ? 'w-0 bg-white/20 group-hover:w-12' : 'w-0 bg-black/20 group-hover:w-12'
                 }`}></div>
               </button>
 
@@ -742,9 +749,227 @@ export default function Component() {
           clearAllFavorites={clearAllFavorites}
           isDarkMode={isDarkMode}
         />
+      ) : currentView === 'about' ? (
+        <AboutContent isMobile={isMobile} isDarkMode={isDarkMode} />
+      ) : currentView === 'contact' ? (
+        <ContactContent isMobile={isMobile} isDarkMode={isDarkMode} />
       ) : (
         <GameContent isMobile={isMobile} isDarkMode={isDarkMode} />
       )}
+    </div>
+  );
+}
+
+function AboutContent({ isMobile, isDarkMode }) {
+  const highlights = [
+    { title: 'Premium Beans', text: 'Single-origin beans sourced from trusted farms and seasonal lots.' },
+    { title: 'Expert Roasting', text: 'Each profile is tuned to preserve aroma, body, and balanced acidity.' },
+    { title: 'Craft Service', text: 'Every cup is hand-finished for consistency and memorable flavor.' },
+  ];
+
+  return (
+    <div className='w-full min-h-screen bg-[var(--bg-primary)] overflow-x-hidden transition-colors duration-300'>
+      <div className='w-full pt-32 sm:pt-36 lg:pt-40 pb-16 sm:pb-24 lg:pb-40'>
+        <div className='max-w-[1400px] mx-auto px-4 sm:px-8 md:px-12 lg:px-16'>
+          <section className='mb-24 sm:mb-28 lg:mb-32'>
+            <div className='max-w-5xl mx-auto text-center'>
+              <div className='mb-8 sm:mb-10 lg:mb-12'>
+                <div className='inline-flex items-center gap-3 sm:gap-4'>
+                  <div className='h-px w-8 sm:w-12 bg-amber-500'></div>
+                  <span className='text-amber-500 text-[9px] sm:text-[10px] tracking-[0.5em] font-light uppercase'>
+                    About Brew
+                  </span>
+                  <div className='h-px w-8 sm:w-12 bg-amber-500'></div>
+                </div>
+              </div>
+
+              <h1 className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extralight leading-[0.92] tracking-tighter mb-8 sm:mb-10 ${
+                isDarkMode ? 'text-white' : 'text-black'
+              }`}>
+                Our
+                <br />
+                <span className='text-amber-500'>Story</span>
+              </h1>
+
+              <p className={`text-sm sm:text-base md:text-lg lg:text-xl font-light leading-relaxed max-w-3xl mx-auto ${
+                isDarkMode ? 'text-white/50' : 'text-black/60'
+              }`}>
+                BREW started with one idea: make specialty coffee approachable without compromising quality. From bean selection to final pour, we build every detail around flavor, warmth, and craftsmanship.
+              </p>
+
+              <div className={`mt-8 sm:mt-10 max-w-3xl mx-auto border px-5 py-5 sm:px-7 sm:py-6 ${
+                isDarkMode ? 'border-amber-500/20 bg-amber-500/5' : 'border-amber-600/20 bg-amber-500/10'
+              }`}>
+                <p className={`text-xs sm:text-sm tracking-[0.25em] uppercase mb-3 ${isDarkMode ? 'text-amber-500' : 'text-amber-700'}`}>
+                  Development Credits
+                </p>
+                <p className={`text-sm sm:text-base font-light leading-relaxed ${isDarkMode ? 'text-white/70' : 'text-black/70'}`}>
+                  All of this is developed by our society chi5a.tn by Salmen Khabou and Mohamed Amin Mallek.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className='mb-24 sm:mb-28 lg:mb-32'>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8'>
+              {highlights.map((item) => (
+                <article
+                  key={item.title}
+                  className={`border p-6 sm:p-8 transition-colors ${
+                    isDarkMode ? 'border-white/10 bg-white/5' : 'border-black/10 bg-black/5'
+                  }`}
+                >
+                  <h3 className={`text-lg sm:text-xl tracking-wide font-light mb-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                    {item.title}
+                  </h3>
+                  <p className={`text-sm leading-relaxed font-light ${isDarkMode ? 'text-white/50' : 'text-black/60'}`}>
+                    {item.text}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className={`border-t pt-12 sm:pt-16 lg:pt-20 ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}>
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16'>
+              <div>
+                <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-light mb-6 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  What We Believe
+                </h2>
+                <p className={`text-sm sm:text-base leading-relaxed font-light ${isDarkMode ? 'text-white/50' : 'text-black/60'}`}>
+                  Great coffee is a daily ritual. We design our menu and experience around consistency, hospitality, and transparent sourcing so every visit feels intentional.
+                </p>
+              </div>
+
+              <div className={`p-6 sm:p-8 border ${isDarkMode ? 'border-amber-500/20 bg-amber-500/5' : 'border-amber-600/20 bg-amber-500/10'}`}>
+                <h3 className={`text-xs tracking-[0.35em] uppercase mb-5 ${isDarkMode ? 'text-amber-500' : 'text-amber-700'}`}>
+                  Quick Facts
+                </h3>
+                <ul className='space-y-3 text-sm sm:text-base font-light'>
+                  <li className={isDarkMode ? 'text-white/70' : 'text-black/70'}>Opened in 2020</li>
+                  <li className={isDarkMode ? 'text-white/70' : 'text-black/70'}>8 signature drinks</li>
+                  <li className={isDarkMode ? 'text-white/70' : 'text-black/70'}>Locally roasted partnerships</li>
+                  <li className={isDarkMode ? 'text-white/70' : 'text-black/70'}>Community-first events monthly</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContactContent({ isMobile, isDarkMode }) {
+  const contactCards = [
+    { title: 'Society', value: 'chi5a.tn', icon: MapPin },
+    { title: 'Salmen Khabou', value: 'salmenkhabou3@gmail.com', icon: Mail },
+    { title: 'Mohamed Amin Mallek', value: 'aminmallek02@gmail.com', icon: Mail },
+    { title: 'Phone Numbers', value: '21074001 / 24494492', icon: Phone },
+  ];
+
+  return (
+    <div className='w-full min-h-screen bg-[var(--bg-primary)] overflow-x-hidden transition-colors duration-300'>
+      <div className='w-full pt-32 sm:pt-36 lg:pt-40 pb-16 sm:pb-24 lg:pb-40'>
+        <div className='max-w-[1400px] mx-auto px-4 sm:px-8 md:px-12 lg:px-16'>
+          <section className='mb-20 sm:mb-24 lg:mb-28'>
+            <div className='max-w-5xl mx-auto text-center'>
+              <div className='mb-8 sm:mb-10 lg:mb-12'>
+                <div className='inline-flex items-center gap-3 sm:gap-4'>
+                  <div className='h-px w-8 sm:w-12 bg-amber-500'></div>
+                  <span className='text-amber-500 text-[9px] sm:text-[10px] tracking-[0.5em] font-light uppercase'>
+                    Contact
+                  </span>
+                  <div className='h-px w-8 sm:w-12 bg-amber-500'></div>
+                </div>
+              </div>
+
+              <h1 className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extralight leading-[0.92] tracking-tighter mb-8 sm:mb-10 ${
+                isDarkMode ? 'text-white' : 'text-black'
+              }`}>
+                Let&apos;s
+                <br />
+                <span className='text-amber-500'>Talk</span>
+              </h1>
+
+              <p className={`text-sm sm:text-base md:text-lg lg:text-xl font-light leading-relaxed max-w-3xl mx-auto ${
+                isDarkMode ? 'text-white/50' : 'text-black/60'
+              }`}>
+                Questions, feedback, or collaboration ideas? Reach out directly to the chi5a.tn developers using the contacts below.
+              </p>
+            </div>
+          </section>
+
+          <section className='mb-20 sm:mb-24 lg:mb-28'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6'>
+              {contactCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <article
+                    key={card.title}
+                    className={`border p-5 sm:p-6 ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-black/10 bg-black/5'}`}
+                  >
+                    <Icon size={18} className='text-amber-500 mb-4' strokeWidth={1.7} />
+                    <h3 className={`text-xs tracking-[0.3em] uppercase mb-2 ${isDarkMode ? 'text-white/70' : 'text-black/70'}`}>
+                      {card.title}
+                    </h3>
+                    <p className={`text-sm sm:text-base font-light break-words ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                      {card.value}
+                    </p>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className={`border-t pt-12 sm:pt-16 lg:pt-20 ${isDarkMode ? 'border-white/10' : 'border-black/10'}`}>
+            <div className='max-w-3xl'>
+              <h2 className={`text-2xl sm:text-3xl lg:text-4xl font-light mb-8 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                Send a Message
+              </h2>
+
+              <form className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5' onSubmit={(e) => e.preventDefault()}>
+                <input
+                  type='text'
+                  placeholder='Your name'
+                  className={`sm:col-span-1 bg-transparent border px-4 py-3 text-sm font-light focus:outline-none focus:border-amber-500 transition-colors ${
+                    isDarkMode ? 'border-white/20 text-white placeholder:text-white/30' : 'border-black/20 text-black placeholder:text-black/40'
+                  }`}
+                />
+                <input
+                  type='email'
+                  placeholder='Your email'
+                  className={`sm:col-span-1 bg-transparent border px-4 py-3 text-sm font-light focus:outline-none focus:border-amber-500 transition-colors ${
+                    isDarkMode ? 'border-white/20 text-white placeholder:text-white/30' : 'border-black/20 text-black placeholder:text-black/40'
+                  }`}
+                />
+                <input
+                  type='text'
+                  placeholder='Subject'
+                  className={`sm:col-span-2 bg-transparent border px-4 py-3 text-sm font-light focus:outline-none focus:border-amber-500 transition-colors ${
+                    isDarkMode ? 'border-white/20 text-white placeholder:text-white/30' : 'border-black/20 text-black placeholder:text-black/40'
+                  }`}
+                />
+                <textarea
+                  rows={isMobile ? 5 : 6}
+                  placeholder='Tell us how we can help'
+                  className={`sm:col-span-2 bg-transparent border px-4 py-3 text-sm font-light focus:outline-none focus:border-amber-500 transition-colors resize-none ${
+                    isDarkMode ? 'border-white/20 text-white placeholder:text-white/30' : 'border-black/20 text-black placeholder:text-black/40'
+                  }`}
+                />
+                <button
+                  type='submit'
+                  className={`sm:col-span-2 w-full sm:w-fit px-10 py-3 text-xs tracking-[0.3em] uppercase transition-all duration-300 font-light ${
+                    isDarkMode ? 'bg-amber-500 text-black hover:bg-white' : 'bg-amber-600 text-white hover:bg-amber-700'
+                  }`}
+                >
+                  Send Message
+                </button>
+              </form>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
@@ -997,30 +1222,6 @@ function ShopContent({ isMobile, coffeeItems, categories, favorites, toggleFavor
                 </p>
               </div>
               
-              {/* CTA */}
-              <div className='flex flex-col sm:flex-row justify-center gap-4 px-4'>
-                <button className={`group relative px-10 sm:px-14 lg:px-16 py-4 sm:py-5 lg:py-6 text-xs sm:text-sm tracking-[0.3em] transition-all duration-500 font-medium uppercase overflow-hidden w-full sm:w-auto ${
-                  isDarkMode ? 'bg-amber-500 text-black hover:bg-white' : 'bg-amber-600 text-white hover:bg-amber-700'
-                }`}>
-                  <span className='relative z-10 flex items-center justify-center gap-3'>
-                    Explore Collection
-                    <ChevronRight size={18} className='group-hover:translate-x-2 transition-transform duration-500' />
-                  </span>
-                </button>
-                <button
-                  onClick={() => onLaunchAR(3)}
-                  className={`group relative px-10 sm:px-14 lg:px-16 py-4 sm:py-5 lg:py-6 text-xs sm:text-sm tracking-[0.3em] transition-all duration-500 font-medium uppercase overflow-hidden w-full sm:w-auto border ${
-                    isDarkMode
-                      ? 'border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-black'
-                      : 'border-amber-600/50 text-amber-700 hover:bg-amber-600 hover:text-white'
-                  }`}
-                >
-                  <span className='relative z-10 flex items-center justify-center gap-3'>
-                    View in AR
-                    <Play size={16} className='group-hover:scale-110 transition-transform duration-300' />
-                  </span>
-                </button>
-              </div>
             </div>
           </section>
 
