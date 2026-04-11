@@ -218,13 +218,13 @@ export default function Loader({ onLoadComplete }) {
                     <div className="flex items-center justify-center gap-2 text-amber-700/50 text-xs tracking-widest">
                         <span>POWERED BY</span>
                         <div className="flex items-center gap-2">
-                            <span className="font-semibold">REACT</span>
+                            <span className="font-semibold">CHI5A</span>
                             <span>•</span>
-                            <span className="font-semibold">VITE</span>
+                            <span className="font-semibold">TN</span>
                         </div>
                     </div>
                     <div className="text-amber-800/40 text-xs">
-                        © 2025 Coffee Games. All rights reserved.
+                        © 2026 CHI5A.TN All rights reserved.
                     </div>
                 </div>
             </div>

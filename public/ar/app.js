@@ -14,6 +14,9 @@ class ARSmartMenu {
 
     cacheElements() {
         this.elements = {
+            splashScreen: document.getElementById('splash-screen'),
+            splashStartBtn: document.getElementById('splash-start-btn'),
+            landingPage: document.getElementById('landing-page'),
             menuGrid: document.getElementById('menu-grid'),
             startARBtn: document.getElementById('start-ar-btn'),
             loadingOverlay: document.getElementById('loading-overlay'),
@@ -56,6 +59,12 @@ class ARSmartMenu {
     }
 
     bindEvents() {
+        if (this.elements.splashStartBtn) {
+            this.elements.splashStartBtn.addEventListener('click', () => this.enterMenu());
+        } else {
+            this.enterMenu();
+        }
+
         // Start AR button - navigate to AR page
         this.elements.startARBtn.addEventListener('click', () => this.startAR());
         
@@ -66,6 +75,16 @@ class ARSmartMenu {
                 this.selectDish(menuItem.dataset.dishId);
             }
         });
+    }
+
+    enterMenu() {
+        if (this.elements.splashScreen) {
+            this.elements.splashScreen.classList.add('hidden');
+        }
+
+        if (this.elements.landingPage) {
+            this.elements.landingPage.classList.remove('hidden');
+        }
     }
 
     selectDish(dishId) {
