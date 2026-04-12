@@ -465,18 +465,6 @@ export default function Component() {
                     0
                   </span>
                 </button>
-                
-                <div className={`h-6 w-px transition-colors ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`}></div>
-                <button className={`group relative overflow-hidden bg-transparent border px-8 py-2.5 text-xs tracking-[0.25em] transition-colors duration-500 font-light uppercase ${
-                  isDarkMode 
-                    ? 'border-amber-500/50 text-amber-500 hover:text-black' 
-                    : 'border-amber-600/50 text-amber-600 hover:text-white'
-                }`}>
-                  <span className='relative z-10'>Sign In</span>
-                  <div className={`absolute inset-0 transform -translate-y-full group-hover:translate-y-0 transition-transform duration-500 ${
-                    isDarkMode ? 'bg-amber-500' : 'bg-amber-600'
-                  }`}></div>
-                </button>
               </div>
             </div>
           </div>
