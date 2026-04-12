@@ -32,6 +32,7 @@ import {
   loadCoffeeItems,
   loadSiteSettings,
 } from '../utils/adminStorage';
+import { createOrder } from '../utils/orderService';
 
 export default function Component() {
   const isMobile = useMobile();
@@ -50,6 +51,20 @@ export default function Component() {
   });
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const raw = localStorage.getItem('brew_cart_items');
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error('Error loading cart:', error);
+      return [];
+    }
+  });
+  const [tableNumber, setTableNumber] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
+  const [orderMsg, setOrderMsg] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,6 +92,14 @@ export default function Component() {
     }
   }, [favorites]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('brew_cart_items', JSON.stringify(cartItems));
+    } catch (error) {
+      console.error('Error saving cart:', error);
+    }
+  }, [cartItems]);
+
   const toggleFavorite = (id) => {
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -92,6 +115,83 @@ export default function Component() {
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
+  };
+
+  const addToCart = (item) => {
+    if (!siteSettings.showOrdersModule) {
+      setOrderMsg('Le module commande est desactive pour le moment.');
+      return;
+    }
+
+    setCartItems((prev) => {
+      const existing = prev.find((entry) => Number(entry.id) === Number(item.id));
+      if (existing) {
+        return prev.map((entry) =>
+          Number(entry.id) === Number(item.id)
+            ? { ...entry, quantity: Number(entry.quantity || 0) + 1 }
+            : entry
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          id: item.id,
+          name: item.name,
+          price: Number(item.price || 0),
+          image: item.image,
+          quantity: 1,
+        },
+      ];
+    });
+
+    setOrderMsg(`${item.name} ajoute au panier.`);
+  };
+
+  const updateCartQuantity = (itemId, delta) => {
+    setCartItems((prev) => {
+      const next = prev
+        .map((item) =>
+          Number(item.id) === Number(itemId)
+            ? { ...item, quantity: Number(item.quantity || 0) + delta }
+            : item
+        )
+        .filter((item) => Number(item.quantity) > 0);
+      return next;
+    });
+  };
+
+  const removeFromCart = (itemId) => {
+    setCartItems((prev) => prev.filter((item) => Number(item.id) !== Number(itemId)));
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
+  const submitOrder = async () => {
+    if (!siteSettings.showOrdersModule) {
+      setOrderMsg('Module commande desactive par l administrateur.');
+      return;
+    }
+
+    const result = await createOrder({
+      tableNumber,
+      customerName,
+      notes: orderNotes,
+      items: cartItems,
+    });
+
+    if (!result.ok) {
+      setOrderMsg(`Erreur commande: ${result.message}`);
+      return;
+    }
+
+    setOrderMsg('Commande envoyee avec succes.');
+    setCartItems([]);
+    setTableNumber('');
+    setCustomerName('');
+    setOrderNotes('');
   };
 
   useEffect(() => {
@@ -129,6 +229,12 @@ export default function Component() {
       setCurrentView('shop');
     }
   }, [siteSettings.showGames, currentView]);
+
+  useEffect(() => {
+    if (!siteSettings.showOrdersModule && currentView === 'cart') {
+      setCurrentView('shop');
+    }
+  }, [siteSettings.showOrdersModule, currentView]);
 
   const launchARExperience = async (coffeeId) => {
     if (!siteSettings.showAR) {
@@ -318,6 +424,11 @@ export default function Component() {
 
   const [managedCoffeeItems, setManagedCoffeeItems] = useState(coffeeItems);
   const effectiveCoffeeItems = managedCoffeeItems.length > 0 ? managedCoffeeItems : coffeeItems;
+  const cartCount = cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const cartTotal = cartItems.reduce(
+    (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
+    0
+  );
 
   const categories = [
     { name: 'All', icon: '☕', count: effectiveCoffeeItems.length },
@@ -451,20 +562,24 @@ export default function Component() {
                     </span>
                   )}
                 </button>
-                <button className='relative group'>
-                  <ShoppingCart
-                    size={20}
-                    strokeWidth={1.5}
-                    className={`transition-colors duration-300 ${
-                      isDarkMode 
-                        ? 'text-white/60 group-hover:text-amber-500' 
-                        : 'text-black/60 group-hover:text-amber-600'
-                    }`}
-                  />
-                  <span className='absolute -top-2 -right-2 w-4 h-4 bg-amber-500 text-black text-[9px] font-medium rounded-full flex items-center justify-center'>
-                    0
-                  </span>
-                </button>
+                {siteSettings.showOrdersModule && (
+                  <button onClick={() => setCurrentView('cart')} className='relative group'>
+                    <ShoppingCart
+                      size={20}
+                      strokeWidth={1.5}
+                      className={`transition-colors duration-300 ${
+                        currentView === 'cart'
+                          ? 'text-amber-500'
+                          : isDarkMode
+                            ? 'text-white/60 group-hover:text-amber-500'
+                            : 'text-black/60 group-hover:text-amber-600'
+                      }`}
+                    />
+                    <span className='absolute -top-2 -right-2 w-4 h-4 bg-amber-500 text-black text-[9px] font-medium rounded-full flex items-center justify-center'>
+                      {cartCount}
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -599,24 +714,32 @@ export default function Component() {
               </span>
             </button>
 
-            {/* Cart */}
-            <button className='flex flex-col items-center gap-1 min-w-[60px] relative'>
-              <ShoppingCart 
-                size={24} 
-                strokeWidth={1.5}
-                className={`transition-colors duration-300 ${
-                  isDarkMode ? 'text-white/40' : 'text-black/40'
-                }`}
-              />
-              <span className='absolute top-0 right-3 w-4 h-4 bg-amber-500 text-black text-[9px] font-medium rounded-full flex items-center justify-center'>
-                0
-              </span>
-              <span className={`text-[10px] font-light tracking-wider ${
-                isDarkMode ? 'text-white/40' : 'text-black/40'
-              }`}>
-                CART
-              </span>
-            </button>
+            {siteSettings.showOrdersModule && (
+              <button
+                onClick={() => setCurrentView('cart')}
+                className='flex flex-col items-center gap-1 min-w-[60px] relative'
+              >
+                <ShoppingCart 
+                  size={24} 
+                  strokeWidth={1.5}
+                  className={`transition-colors duration-300 ${
+                    currentView === 'cart'
+                      ? 'text-amber-500'
+                      : isDarkMode ? 'text-white/40' : 'text-black/40'
+                  }`}
+                />
+                <span className='absolute top-0 right-3 w-4 h-4 bg-amber-500 text-black text-[9px] font-medium rounded-full flex items-center justify-center'>
+                  {cartCount}
+                </span>
+                <span className={`text-[10px] font-light tracking-wider ${
+                  currentView === 'cart'
+                    ? 'text-amber-500'
+                    : isDarkMode ? 'text-white/40' : 'text-black/40'
+                }`}>
+                  CART
+                </span>
+              </button>
+            )}
 
             {/* Profile/Sign In */}
             <button className='flex flex-col items-center gap-1 min-w-[60px]'>
@@ -758,10 +881,22 @@ export default function Component() {
                 }`} />
                 <span className='text-base tracking-wider'>FAVORITES ({favorites.length})</span>
               </button>
-              <button className={`flex items-center gap-4 transition-colors group ${isDarkMode ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'}`}>
-                <ShoppingCart size={22} strokeWidth={1.5} className='group-hover:text-amber-500 transition-colors' />
-                <span className='text-base tracking-wider'>CART (0)</span>
-              </button>
+              {siteSettings.showOrdersModule && (
+                <button
+                  onClick={() => {
+                    setCurrentView('cart');
+                    setMenuOpen(false);
+                  }}
+                  className={`flex items-center gap-4 transition-colors group ${
+                    currentView === 'cart'
+                      ? 'text-amber-500'
+                      : isDarkMode ? 'text-white/60 hover:text-white' : 'text-black/60 hover:text-black'
+                  }`}
+                >
+                  <ShoppingCart size={22} strokeWidth={1.5} className='group-hover:text-amber-500 transition-colors' />
+                  <span className='text-base tracking-wider'>CART ({cartCount})</span>
+                </button>
+              )}
               
               <button className={`mt-10 px-10 py-4 text-sm font-medium tracking-wider transition-all duration-300 ${
                 isDarkMode ? 'bg-amber-500 text-black hover:bg-white' : 'bg-amber-600 text-white hover:bg-amber-700'
@@ -784,6 +919,8 @@ export default function Component() {
           isDarkMode={isDarkMode}
           onLaunchAR={launchARExperience}
           showAR={siteSettings.showAR}
+          showOrdersModule={siteSettings.showOrdersModule}
+          onAddToCart={addToCart}
         />
       ) : currentView === 'favorites' ? (
         <FavoritesContent
@@ -793,6 +930,26 @@ export default function Component() {
           toggleFavorite={toggleFavorite}
           clearAllFavorites={clearAllFavorites}
           isDarkMode={isDarkMode}
+          showOrdersModule={siteSettings.showOrdersModule}
+          onAddToCart={addToCart}
+        />
+      ) : currentView === 'cart' && siteSettings.showOrdersModule ? (
+        <CartContent
+          isDarkMode={isDarkMode}
+          cartItems={cartItems}
+          cartTotal={cartTotal}
+          tableNumber={tableNumber}
+          setTableNumber={setTableNumber}
+          customerName={customerName}
+          setCustomerName={setCustomerName}
+          orderNotes={orderNotes}
+          setOrderNotes={setOrderNotes}
+          onIncrement={(id) => updateCartQuantity(id, 1)}
+          onDecrement={(id) => updateCartQuantity(id, -1)}
+          onRemove={removeFromCart}
+          onClear={clearCart}
+          onConfirm={submitOrder}
+          orderMsg={orderMsg}
         />
       ) : currentView === 'about' ? (
         <AboutContent isMobile={isMobile} isDarkMode={isDarkMode} />
@@ -810,6 +967,8 @@ export default function Component() {
           isDarkMode={isDarkMode}
           onLaunchAR={launchARExperience}
           showAR={siteSettings.showAR}
+          showOrdersModule={siteSettings.showOrdersModule}
+          onAddToCart={addToCart}
         />
       )}
     </div>
@@ -1030,7 +1189,120 @@ function ContactContent({ isMobile, isDarkMode }) {
   );
 }
 
-function FavoritesContent({ isMobile, coffeeItems, favorites, toggleFavorite, clearAllFavorites, isDarkMode }) {
+function CartContent({
+  isDarkMode,
+  cartItems,
+  cartTotal,
+  tableNumber,
+  setTableNumber,
+  customerName,
+  setCustomerName,
+  orderNotes,
+  setOrderNotes,
+  onIncrement,
+  onDecrement,
+  onRemove,
+  onClear,
+  onConfirm,
+  orderMsg,
+}) {
+  return (
+    <div className='w-full min-h-screen bg-[var(--bg-primary)] overflow-x-hidden transition-colors duration-300'>
+      <div className='w-full pt-32 sm:pt-36 lg:pt-40 pb-16 sm:pb-24 lg:pb-40'>
+        <div className='max-w-[1100px] mx-auto px-4 sm:px-8 lg:px-12'>
+          <section className='mb-10'>
+            <h1 className='text-4xl sm:text-5xl font-light text-[var(--text-primary)]'>Panier</h1>
+            <p className='text-sm text-[var(--text-secondary)] mt-3'>
+              Verifiez votre commande, ajoutez votre numero de table, puis confirmez.
+            </p>
+          </section>
+
+          {cartItems.length === 0 ? (
+            <div className={`border p-8 text-center ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-black/10 bg-black/5'}`}>
+              <p className='text-[var(--text-secondary)]'>Votre panier est vide.</p>
+            </div>
+          ) : (
+            <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+              <div className='lg:col-span-2 space-y-4'>
+                {cartItems.map((item) => (
+                  <article
+                    key={item.id}
+                    className={`border p-4 sm:p-5 flex items-center gap-4 ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-black/10 bg-black/5'}`}
+                  >
+                    <img src={item.image} alt={item.name} className='w-16 h-16 object-cover border border-white/10' />
+                    <div className='flex-1 min-w-0'>
+                      <p className='text-[var(--text-primary)] truncate'>{item.name}</p>
+                      <p className='text-amber-500 text-sm'>{Number(item.price || 0).toFixed(2)} DT</p>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <button onClick={() => onDecrement(item.id)} className='px-2 py-1 border border-white/20'>-</button>
+                      <span className='w-6 text-center'>{item.quantity}</span>
+                      <button onClick={() => onIncrement(item.id)} className='px-2 py-1 border border-white/20'>+</button>
+                    </div>
+                    <button
+                      onClick={() => onRemove(item.id)}
+                      className='px-3 py-1 text-xs border border-red-500/40 text-red-400 hover:bg-red-500/20'
+                    >
+                      Retirer
+                    </button>
+                  </article>
+                ))}
+              </div>
+
+              <aside className={`border p-5 sm:p-6 space-y-4 ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-black/10 bg-black/5'}`}>
+                <h2 className='text-xl font-light text-[var(--text-primary)]'>Confirmation</h2>
+                <input
+                  type='text'
+                  placeholder='Numero de table (obligatoire)'
+                  value={tableNumber}
+                  onChange={(event) => setTableNumber(event.target.value)}
+                  className='w-full bg-transparent border border-white/20 px-4 py-3 text-sm outline-none focus:border-amber-500'
+                />
+                <input
+                  type='text'
+                  placeholder='Nom client (optionnel)'
+                  value={customerName}
+                  onChange={(event) => setCustomerName(event.target.value)}
+                  className='w-full bg-transparent border border-white/20 px-4 py-3 text-sm outline-none focus:border-amber-500'
+                />
+                <textarea
+                  placeholder='Note commande (optionnel)'
+                  value={orderNotes}
+                  onChange={(event) => setOrderNotes(event.target.value)}
+                  className='w-full min-h-24 bg-transparent border border-white/20 px-4 py-3 text-sm outline-none focus:border-amber-500'
+                />
+
+                <div className='pt-2 border-t border-white/10'>
+                  <p className='text-sm text-[var(--text-secondary)]'>Total</p>
+                  <p className='text-2xl font-light text-amber-500'>{cartTotal.toFixed(2)} DT</p>
+                </div>
+
+                <div className='flex gap-3'>
+                  <button
+                    onClick={onConfirm}
+                    className='flex-1 bg-amber-500 text-black font-semibold py-3 hover:bg-amber-400 transition-colors'
+                  >
+                    Confirmer commande
+                  </button>
+                  <button
+                    onClick={onClear}
+                    className='px-4 py-3 border border-white/20 hover:bg-white/10 transition-colors text-sm'
+                  >
+                    Vider
+                  </button>
+                </div>
+
+                {orderMsg && <p className='text-sm text-emerald-400'>{orderMsg}</p>}
+              </aside>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FavoritesContent({ isMobile, coffeeItems, favorites, toggleFavorite, clearAllFavorites, isDarkMode, showOrdersModule, onAddToCart }) {
   const favoritedItems = coffeeItems.filter(item => favorites.includes(item.id));
 
   return (
@@ -1188,13 +1460,18 @@ function FavoritesContent({ isMobile, coffeeItems, favorites, toggleFavorite, cl
                           </div>
                         )}
                       </div>
-                      <button className={`px-6 py-3 text-xs font-medium tracking-wider transition-all duration-300 ${
-                        isDarkMode
-                          ? 'bg-amber-500 text-black hover:bg-white'
-                          : 'bg-amber-600 text-white hover:bg-amber-700'
-                      }`}>
-                        ADD
-                      </button>
+                      {showOrdersModule && (
+                        <button
+                          onClick={() => onAddToCart(item)}
+                          className={`px-6 py-3 text-xs font-medium tracking-wider transition-all duration-300 ${
+                            isDarkMode
+                              ? 'bg-amber-500 text-black hover:bg-white'
+                              : 'bg-amber-600 text-white hover:bg-amber-700'
+                          }`}
+                        >
+                          ADD
+                        </button>
+                      )}
                     </div>
 
                     {/* Tags */}
@@ -1219,7 +1496,7 @@ function FavoritesContent({ isMobile, coffeeItems, favorites, toggleFavorite, cl
   );
 }
 
-function ShopContent({ isMobile, coffeeItems, categories, favorites, toggleFavorite, isDarkMode, onLaunchAR, showAR }) {
+function ShopContent({ isMobile, coffeeItems, categories, favorites, toggleFavorite, isDarkMode, onLaunchAR, showAR, showOrdersModule, onAddToCart }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [hoveredCard, setHoveredCard] = useState(null);
 
@@ -1469,17 +1746,22 @@ function ShopContent({ isMobile, coffeeItems, categories, favorites, toggleFavor
                     </div>
 
                     {/* Add to Cart Button */}
-                    <button className={`tracking-[0.3em] transition-all duration-300 font-light uppercase flex items-center justify-center gap-2 ${
-                      isMobile 
-                        ? 'px-3 py-2 text-[9px] flex-shrink-0' 
-                        : 'w-full px-6 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-xs'
-                    } ${
-                      isDarkMode ? 'bg-amber-500 text-black hover:bg-amber-400' : 'bg-amber-600 text-white hover:bg-amber-700'
-                    }`}>
-                      <ShoppingCart size={isMobile ? 14 : 16} strokeWidth={1.5} />
-                      {!isMobile && 'Add to Cart'}
-                      {isMobile && 'Add'}
-                    </button>
+                    {showOrdersModule && (
+                      <button
+                        onClick={() => onAddToCart(item)}
+                        className={`tracking-[0.3em] transition-all duration-300 font-light uppercase flex items-center justify-center gap-2 ${
+                          isMobile 
+                            ? 'px-3 py-2 text-[9px] flex-shrink-0' 
+                            : 'w-full px-6 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-xs'
+                        } ${
+                          isDarkMode ? 'bg-amber-500 text-black hover:bg-amber-400' : 'bg-amber-600 text-white hover:bg-amber-700'
+                        }`}
+                      >
+                        <ShoppingCart size={isMobile ? 14 : 16} strokeWidth={1.5} />
+                        {!isMobile && 'Add to Cart'}
+                        {isMobile && 'Add'}
+                      </button>
+                    )}
                     {!isMobile && showAR && (
                       <button
                         onClick={() => onLaunchAR(item.id)}

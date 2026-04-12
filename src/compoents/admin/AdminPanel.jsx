@@ -372,7 +372,7 @@ export default function AdminPanel() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
         <section className="border border-white/10 bg-white/5 p-5 sm:p-7">
           <h2 className="text-xl sm:text-2xl font-light mb-5">1) Controles de securite et disponibilite</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <label className="border border-white/10 p-4 flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm text-white/80">Site actif pour le client</p>
@@ -413,6 +413,21 @@ export default function AdminPanel() {
                 checked={settings.showGames}
                 onChange={(event) => {
                   void persistSettings({ ...settings, showGames: event.target.checked });
+                }}
+                className="h-4 w-4 accent-amber-500"
+              />
+            </label>
+
+            <label className="border border-white/10 p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-white/80">Module Commande actif</p>
+                <p className="text-xs text-white/50">Active/desactive Add to cart, panier client et la route /commande.</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={Boolean(settings.showOrdersModule)}
+                onChange={(event) => {
+                  void persistSettings({ ...settings, showOrdersModule: event.target.checked });
                 }}
                 className="h-4 w-4 accent-amber-500"
               />

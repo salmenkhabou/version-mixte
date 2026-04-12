@@ -3,20 +3,23 @@ import './App.css'
 import Component from './compoents/CoffeeShop'
 import Loader from './compoents/Loader'
 import AdminPanel from './compoents/admin/AdminPanel'
+import CommandePanel from './compoents/commande/CommandePanel'
 import { ADMIN_STORAGE_KEYS, DEFAULT_SITE_SETTINGS, loadSiteSettings } from './utils/adminStorage'
 
 function App() {
-  const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/chika/super-admin')
+  const currentPath = window.location.pathname.toLowerCase()
+  const isAdminRoute = currentPath.startsWith('/chika/super-admin')
+  const isCommandeRoute = currentPath.startsWith('/commande')
   const [isLoading, setIsLoading] = useState(true)
   const [showContent, setShowContent] = useState(false)
-  const [siteEnabled, setSiteEnabled] = useState(DEFAULT_SITE_SETTINGS.siteEnabled)
+  const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS)
 
   useEffect(() => {
     const syncSettings = async (event) => {
       const nextKey = event?.detail?.key ?? event?.key
       if (!nextKey || nextKey === ADMIN_STORAGE_KEYS.settings) {
         const settings = await loadSiteSettings()
-        setSiteEnabled(Boolean(settings.siteEnabled))
+        setSiteSettings(settings)
       }
     }
 
@@ -42,7 +45,25 @@ function App() {
     return <AdminPanel />
   }
 
-  if (!siteEnabled) {
+  if (isCommandeRoute) {
+    if (!siteSettings.showOrdersModule) {
+      return (
+        <div className='min-h-screen bg-black text-white flex items-center justify-center px-6'>
+          <div className='max-w-xl text-center border border-amber-500/30 bg-white/5 p-8'>
+            <p className='text-[10px] tracking-[0.35em] uppercase text-amber-500 mb-4'>Commande Module</p>
+            <h1 className='text-3xl sm:text-4xl font-light mb-4'>Module desactive</h1>
+            <p className='text-white/60'>
+              Le module /commande est desactive par l administrateur.
+            </p>
+          </div>
+        </div>
+      )
+    }
+
+    return <CommandePanel />
+  }
+
+  if (!siteSettings.siteEnabled) {
     return (
       <div className='min-h-screen bg-black text-white flex items-center justify-center px-6'>
         <div className='max-w-xl text-center border border-amber-500/30 bg-white/5 p-8'>

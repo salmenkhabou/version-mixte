@@ -14,6 +14,7 @@ export const DEFAULT_SITE_SETTINGS = {
   siteEnabled: true,
   showAR: true,
   showGames: true,
+  showOrdersModule: true,
 };
 
 function emitAdminStorageUpdate(key) {
