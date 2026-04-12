@@ -2,15 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ADMIN_STORAGE_KEYS,
   DEFAULT_SITE_SETTINGS,
+  hasAdminWriteAccess,
   loadCoffeeItems,
   loadSiteSettings,
   saveCoffeeItems,
   saveSiteSettings,
 } from '../../utils/adminStorage';
+import { supabaseClient } from '../../lib/supabaseClient';
 
-const ADMIN_USERNAME = import.meta.env.VITE_ADMIN_USER || 'chi5a-admin';
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'chi5a-2026-secure';
-const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
 const LOCK_DURATION_MS = 5 * 60 * 1000;
 const MAX_FAILED_ATTEMPTS = 5;
 
@@ -106,7 +105,7 @@ function sanitizeItem(input, index = 0) {
 }
 
 export default function AdminPanel() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(() => Number(localStorage.getItem(ADMIN_STORAGE_KEYS.lockUntil) || 0));
@@ -119,26 +118,57 @@ export default function AdminPanel() {
   const [statusMsg, setStatusMsg] = useState('');
 
   useEffect(() => {
-    const existing = localStorage.getItem(ADMIN_STORAGE_KEYS.session);
-    if (!existing) return;
-
-    try {
-      const parsed = JSON.parse(existing);
-      if (parsed.expiresAt > Date.now()) {
-        setAuthSession(parsed);
-      } else {
-        localStorage.removeItem(ADMIN_STORAGE_KEYS.session);
-      }
-    } catch (error) {
-      console.error('Invalid admin session:', error);
+    if (!supabaseClient) {
+      setAuthError('Supabase n est pas configure.');
+      return;
     }
+
+    let mounted = true;
+
+    const bootstrapAuth = async () => {
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) {
+        console.error('Unable to restore admin session:', error);
+        return;
+      }
+
+      if (mounted) {
+        setAuthSession(data.session || null);
+      }
+    };
+
+    void bootstrapAuth();
+
+    const { data } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      if (mounted) {
+        setAuthSession(session || null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
     if (!authSession) return;
 
-    setSettings(loadSiteSettings());
-    setArticles(loadCoffeeItems(fallbackArticles).map((item, index) => sanitizeItem(item, index)));
+    const loadAdminData = async () => {
+      const adminAllowed = await hasAdminWriteAccess();
+      if (!adminAllowed) {
+        setStatusMsg('Compte connecte sans droit ecriture. Ajoutez cet utilisateur dans public.admin_users.');
+      }
+
+      const [nextSettings, nextItems] = await Promise.all([
+        loadSiteSettings(),
+        loadCoffeeItems(fallbackArticles),
+      ]);
+      setSettings(nextSettings);
+      setArticles(nextItems.map((item, index) => sanitizeItem(item, index)));
+    };
+
+    void loadAdminData();
   }, [authSession]);
 
   const isLocked = lockUntil > Date.now();
@@ -148,32 +178,51 @@ export default function AdminPanel() {
     return [...articles].sort((a, b) => Number(a.id) - Number(b.id));
   }, [articles]);
 
-  const persistSettings = (nextSettings) => {
-    const saved = saveSiteSettings(nextSettings);
-    setSettings(saved);
-    setStatusMsg('Parametres enregistres.');
+  const persistSettings = async (nextSettings) => {
+    try {
+      const saved = await saveSiteSettings(nextSettings);
+      setSettings(saved);
+      setStatusMsg('Parametres enregistres sur Supabase.');
+    } catch (error) {
+      console.error(error);
+      setStatusMsg('Echec sauvegarde. Verifiez login Supabase et presence dans public.admin_users.');
+    }
   };
 
-  const persistArticles = (nextArticles) => {
+  const persistArticles = async (nextArticles) => {
     const normalized = nextArticles.map((item, index) => sanitizeItem(item, index));
-    saveCoffeeItems(normalized);
+    const remoteSaved = await saveCoffeeItems(normalized);
+
+    if (!remoteSaved) {
+      setStatusMsg('Echec sauvegarde articles. Verifiez login Supabase et presence dans public.admin_users.');
+      return false;
+    }
+
     setArticles(normalized);
-    setStatusMsg('Articles enregistres.');
+    setStatusMsg('Articles enregistres sur Supabase.');
+    return true;
   };
 
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
     setAuthError('');
+
+    if (!supabaseClient) {
+      setAuthError('Supabase n est pas configure.');
+      return;
+    }
 
     if (isLocked) {
       setAuthError(`Acces bloque. Reessayez dans ${lockRemainingMinutes} minute(s).`);
       return;
     }
 
-    const userValid = username.trim() === ADMIN_USERNAME;
-    const passValid = password === ADMIN_PASSWORD;
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
 
-    if (!userValid || !passValid) {
+    if (error) {
       const nextFailed = failedAttempts + 1;
       setFailedAttempts(nextFailed);
 
@@ -193,27 +242,21 @@ export default function AdminPanel() {
     localStorage.removeItem(ADMIN_STORAGE_KEYS.lockUntil);
     setLockUntil(0);
 
-    const nextSession = {
-      user: ADMIN_USERNAME,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + SESSION_DURATION_MS,
-      token: Math.random().toString(36).slice(2),
-    };
-
-    localStorage.setItem(ADMIN_STORAGE_KEYS.session, JSON.stringify(nextSession));
-    setAuthSession(nextSession);
-    setStatusMsg('Connexion admin reussie.');
+    setAuthSession(data.session || null);
+    setStatusMsg('Connexion admin Supabase reussie.');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem(ADMIN_STORAGE_KEYS.session);
+  const handleLogout = async () => {
+    if (supabaseClient) {
+      await supabaseClient.auth.signOut();
+    }
     setAuthSession(null);
-    setUsername('');
+    setEmail('');
     setPassword('');
     setStatusMsg('Session fermee.');
   };
 
-  const upsertArticle = (event) => {
+  const upsertArticle = async (event) => {
     event.preventDefault();
 
     if (!form.name.trim()) {
@@ -232,11 +275,11 @@ export default function AdminPanel() {
     const exists = articles.some((item) => Number(item.id) === Number(payload.id));
 
     if (exists) {
-      persistArticles(articles.map((item) => (Number(item.id) === Number(payload.id) ? payload : item)));
-      setStatusMsg('Article modifie.');
+      const ok = await persistArticles(articles.map((item) => (Number(item.id) === Number(payload.id) ? payload : item)));
+      if (ok) setStatusMsg('Article modifie.');
     } else {
-      persistArticles([...articles, payload]);
-      setStatusMsg('Article ajoute.');
+      const ok = await persistArticles([...articles, payload]);
+      if (ok) setStatusMsg('Article ajoute.');
     }
 
     setForm(emptyForm);
@@ -251,10 +294,10 @@ export default function AdminPanel() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const deleteArticle = (articleId) => {
+  const deleteArticle = async (articleId) => {
     if (!window.confirm('Supprimer cet article ?')) return;
-    persistArticles(articles.filter((item) => Number(item.id) !== Number(articleId)));
-    setStatusMsg('Article supprime.');
+    const ok = await persistArticles(articles.filter((item) => Number(item.id) !== Number(articleId)));
+    if (ok) setStatusMsg('Article supprime.');
 
     if (Number(form.id) === Number(articleId)) {
       setForm(emptyForm);
@@ -273,12 +316,12 @@ export default function AdminPanel() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <input
-              type="text"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder="Utilisateur"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Email admin"
               className="w-full bg-transparent border border-white/20 px-4 py-3 text-sm outline-none focus:border-amber-500"
-              autoComplete="username"
+              autoComplete="email"
             />
             <input
               type="password"
@@ -301,7 +344,7 @@ export default function AdminPanel() {
             </button>
 
             <p className="text-[11px] text-white/45">
-              Pour renforcer la securite, configurez VITE_ADMIN_USER et VITE_ADMIN_PASSWORD dans l environnement de build.
+              Connexion securisee via Supabase Auth (email + mot de passe).
             </p>
           </form>
         </div>
@@ -338,7 +381,9 @@ export default function AdminPanel() {
               <input
                 type="checkbox"
                 checked={settings.siteEnabled}
-                onChange={(event) => persistSettings({ ...settings, siteEnabled: event.target.checked })}
+                onChange={(event) => {
+                  void persistSettings({ ...settings, siteEnabled: event.target.checked });
+                }}
                 className="h-4 w-4 accent-amber-500"
               />
             </label>
@@ -351,7 +396,9 @@ export default function AdminPanel() {
               <input
                 type="checkbox"
                 checked={settings.showAR}
-                onChange={(event) => persistSettings({ ...settings, showAR: event.target.checked })}
+                onChange={(event) => {
+                  void persistSettings({ ...settings, showAR: event.target.checked });
+                }}
                 className="h-4 w-4 accent-amber-500"
               />
             </label>
@@ -364,7 +411,9 @@ export default function AdminPanel() {
               <input
                 type="checkbox"
                 checked={settings.showGames}
-                onChange={(event) => persistSettings({ ...settings, showGames: event.target.checked })}
+                onChange={(event) => {
+                  void persistSettings({ ...settings, showGames: event.target.checked });
+                }}
                 className="h-4 w-4 accent-amber-500"
               />
             </label>

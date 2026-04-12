@@ -1,27 +1,35 @@
 import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import Component from './compoents/CoffeeShop'
 import Loader from './compoents/Loader'
 import AdminPanel from './compoents/admin/AdminPanel'
-import { ADMIN_STORAGE_KEYS, loadSiteSettings } from './utils/adminStorage'
+import { ADMIN_STORAGE_KEYS, DEFAULT_SITE_SETTINGS, loadSiteSettings } from './utils/adminStorage'
 
 function App() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/chika/super-admin')
   const [isLoading, setIsLoading] = useState(true)
   const [showContent, setShowContent] = useState(false)
-  const [siteEnabled, setSiteEnabled] = useState(() => loadSiteSettings().siteEnabled)
+  const [siteEnabled, setSiteEnabled] = useState(DEFAULT_SITE_SETTINGS.siteEnabled)
 
   useEffect(() => {
-    const syncSettings = (event) => {
-      if (!event.key || event.key === ADMIN_STORAGE_KEYS.settings) {
-        setSiteEnabled(loadSiteSettings().siteEnabled)
+    const syncSettings = async (event) => {
+      const nextKey = event?.detail?.key ?? event?.key
+      if (!nextKey || nextKey === ADMIN_STORAGE_KEYS.settings) {
+        const settings = await loadSiteSettings()
+        setSiteEnabled(Boolean(settings.siteEnabled))
       }
     }
 
+    void syncSettings()
     window.addEventListener('storage', syncSettings)
-    return () => window.removeEventListener('storage', syncSettings)
+    window.addEventListener('focus', syncSettings)
+    window.addEventListener('admin-storage-updated', syncSettings)
+
+    return () => {
+      window.removeEventListener('storage', syncSettings)
+      window.removeEventListener('focus', syncSettings)
+      window.removeEventListener('admin-storage-updated', syncSettings)
+    }
   }, [])
 
   const handleLoadComplete = () => {

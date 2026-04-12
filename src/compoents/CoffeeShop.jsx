@@ -26,7 +26,12 @@ import {
 } from 'lucide-react';
 import CoffeeMemoryGame from './game/CoffeeMemoryGame';
 import { useMobile } from './use-mobile';
-import { ADMIN_STORAGE_KEYS, loadCoffeeItems, loadSiteSettings } from '../utils/adminStorage';
+import {
+  ADMIN_STORAGE_KEYS,
+  DEFAULT_SITE_SETTINGS,
+  loadCoffeeItems,
+  loadSiteSettings,
+} from '../utils/adminStorage';
 
 export default function Component() {
   const isMobile = useMobile();
@@ -44,7 +49,7 @@ export default function Component() {
     }
   });
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [siteSettings, setSiteSettings] = useState(() => loadSiteSettings());
+  const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -90,25 +95,32 @@ export default function Component() {
   };
 
   useEffect(() => {
-    const syncAdminConfig = (event) => {
-      if (!event?.key || event.key === ADMIN_STORAGE_KEYS.settings) {
-        setSiteSettings(loadSiteSettings());
-      }
+    const syncAdminConfig = async (event) => {
+      const nextKey = event?.detail?.key ?? event?.key;
+      const shouldSyncSettings = !nextKey || nextKey === ADMIN_STORAGE_KEYS.settings;
+      const shouldSyncItems = !nextKey || nextKey === ADMIN_STORAGE_KEYS.items;
+      if (!shouldSyncSettings && !shouldSyncItems) return;
 
-      if (!event?.key || event.key === ADMIN_STORAGE_KEYS.items) {
-        setManagedCoffeeItems(loadCoffeeItems(coffeeItems));
-      }
+      const [nextSettings, nextItems] = await Promise.all([
+        loadSiteSettings(),
+        loadCoffeeItems(coffeeItems),
+      ]);
+
+      setSiteSettings(nextSettings);
+      setManagedCoffeeItems(Array.isArray(nextItems) ? nextItems : coffeeItems);
     };
 
     window.addEventListener('storage', syncAdminConfig);
     window.addEventListener('focus', syncAdminConfig);
+    window.addEventListener('admin-storage-updated', syncAdminConfig);
 
     // Sync once when page is mounted.
-    setSiteSettings(loadSiteSettings());
+    void syncAdminConfig();
 
     return () => {
       window.removeEventListener('storage', syncAdminConfig);
       window.removeEventListener('focus', syncAdminConfig);
+      window.removeEventListener('admin-storage-updated', syncAdminConfig);
     };
   }, []);
 
@@ -304,7 +316,7 @@ export default function Component() {
     },
   ];
 
-  const [managedCoffeeItems, setManagedCoffeeItems] = useState(() => loadCoffeeItems(coffeeItems));
+  const [managedCoffeeItems, setManagedCoffeeItems] = useState(coffeeItems);
   const effectiveCoffeeItems = managedCoffeeItems.length > 0 ? managedCoffeeItems : coffeeItems;
 
   const categories = [
