@@ -15,11 +15,12 @@ export const DEFAULT_SITE_SETTINGS = {
   showAR: true,
   showGames: true,
   showOrdersModule: true,
+  showInventoryModule: false,
 };
 
 function emitAdminStorageUpdate(key) {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent('admin-storage-updated', { detail: { key } }));
+  if (globalThis.window === undefined) return;
+  globalThis.window.dispatchEvent(new CustomEvent('admin-storage-updated', { detail: { key } }));
 }
 
 function readJsonFromStorage(key) {
@@ -116,9 +117,15 @@ export async function hasAdminWriteAccess() {
   if (!supabaseClient) return false;
 
   try {
-    const { data, error } = await supabaseClient.rpc('is_admin');
-    if (error) return false;
-    return Boolean(data);
+    const ownerCheck = await supabaseClient.rpc('is_owner');
+    if (!ownerCheck.error) {
+      return Boolean(ownerCheck.data);
+    }
+
+    // Backward compatibility for databases that still expose only is_admin().
+    const adminCheck = await supabaseClient.rpc('is_admin');
+    if (adminCheck.error) return false;
+    return Boolean(adminCheck.data);
   } catch (error) {
     console.warn('Unable to verify admin write access.', error);
     return false;

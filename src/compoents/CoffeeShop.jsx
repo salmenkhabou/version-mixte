@@ -33,45 +33,75 @@ import {
   loadSiteSettings,
 } from '../utils/adminStorage';
 import { createOrder } from '../utils/orderService';
+import { useLastOrderStatusPolling } from './hooks/useLastOrderStatusPolling';
+import { usePersistentState } from './hooks/usePersistentState';
+
+const TABLE_NUMBER_REGEX = /^[0-9]{1,3}$/;
+const PHONE_REGEX = /^\+?[0-9]{8,15}$/;
+const FAVORITES_STORAGE_KEY = 'coffeeFavorites';
+const CART_ITEMS_STORAGE_KEY = 'brew_cart_items';
+const LAST_ORDER_STORAGE_KEY = 'brew_last_order';
+const ORDER_STATUS_LABEL = {
+  pending: 'En attente',
+  preparing: 'En preparation',
+  served: 'Servie',
+  cancelled: 'Annulee',
+};
+
+function normalizeClientItem(item) {
+  return {
+    ...item,
+    isAvailable: item?.isAvailable !== false,
+  };
+}
+
+function normalizeStoredArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function normalizeStoredLastOrder(value) {
+  if (!value?.orderNumber || !value?.tableNumber) return null;
+  return value;
+}
 
 export default function Component() {
   const isMobile = useMobile();
   const [currentView, setCurrentView] = useState('shop');
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [favorites, setFavorites] = useState(() => {
-    // Load favorites from localStorage on init
-    try {
-      const saved = localStorage.getItem('coffeeFavorites');
-      return saved ? JSON.parse(saved) : [];
-    } catch (err) {
-      console.error('Error loading favorites:', err);
-      return [];
-    }
+  const [favorites, setFavorites] = usePersistentState(FAVORITES_STORAGE_KEY, [], {
+    normalize: normalizeStoredArray,
+    readErrorLabel: 'favorites',
+    writeErrorLabel: 'favorites',
   });
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [siteSettings, setSiteSettings] = useState(DEFAULT_SITE_SETTINGS);
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      const raw = localStorage.getItem('brew_cart_items');
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-      console.error('Error loading cart:', error);
-      return [];
-    }
+  const [cartItems, setCartItems] = usePersistentState(CART_ITEMS_STORAGE_KEY, [], {
+    normalize: normalizeStoredArray,
+    readErrorLabel: 'cart',
+    writeErrorLabel: 'cart',
   });
   const [tableNumber, setTableNumber] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
   const [orderMsg, setOrderMsg] = useState('');
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [lastOrder, setLastOrder] = usePersistentState(LAST_ORDER_STORAGE_KEY, null, {
+    normalize: normalizeStoredLastOrder,
+    removeWhen: (value) => !value,
+    readErrorLabel: 'last order',
+    writeErrorLabel: 'last order',
+  });
+
+  useLastOrderStatusPolling(lastOrder, setLastOrder);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      setScrolled(globalThis.scrollY > 50);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    globalThis.addEventListener('scroll', handleScroll);
+    return () => globalThis.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
@@ -83,23 +113,6 @@ export default function Component() {
     }
   }, [isDarkMode]);
 
-  // Save favorites to localStorage whenever they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('coffeeFavorites', JSON.stringify(favorites));
-    } catch (err) {
-      console.error('Error saving favorites:', err);
-    }
-  }, [favorites]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('brew_cart_items', JSON.stringify(cartItems));
-    } catch (error) {
-      console.error('Error saving cart:', error);
-    }
-  }, [cartItems]);
-
   const toggleFavorite = (id) => {
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -109,7 +122,6 @@ export default function Component() {
   const clearAllFavorites = () => {
     if (confirm('هل تريد حذف جميع المفضلة؟')) {
       setFavorites([]);
-      localStorage.removeItem('coffeeFavorites');
     }
   };
 
@@ -120,6 +132,11 @@ export default function Component() {
   const addToCart = (item) => {
     if (!siteSettings.showOrdersModule) {
       setOrderMsg('Le module commande est desactive pour le moment.');
+      return;
+    }
+
+    if (item?.isAvailable === false) {
+      setOrderMsg('Article en rupture pour le moment.');
       return;
     }
 
@@ -175,22 +192,71 @@ export default function Component() {
       return;
     }
 
+    if (isSubmittingOrder) return;
+
+    if (!TABLE_NUMBER_REGEX.test(String(tableNumber || '').trim())) {
+      setOrderMsg('Numero de table invalide (1 a 3 chiffres).');
+      return;
+    }
+
+    const normalizedPhone = String(customerPhone || '').trim();
+
+    if (normalizedPhone && !PHONE_REGEX.test(normalizedPhone)) {
+      setOrderMsg('Telephone invalide (8 a 15 chiffres, + optionnel).');
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setOrderMsg('Le panier est vide.');
+      return;
+    }
+
+    setIsSubmittingOrder(true);
+
     const result = await createOrder({
       tableNumber,
       customerName,
+      customerPhone: normalizedPhone,
       notes: orderNotes,
       items: cartItems,
+      idempotencyKey: `${Date.now()}-${tableNumber}`,
     });
+
+    setIsSubmittingOrder(false);
 
     if (!result.ok) {
       setOrderMsg(`Erreur commande: ${result.message}`);
       return;
     }
 
-    setOrderMsg('Commande envoyee avec succes.');
+    if (result.queued) {
+      setLastOrder(null);
+      setOrderMsg(result.message || 'Commande enregistree hors ligne. Synchronisation en attente.');
+      setCartItems([]);
+      setTableNumber('');
+      setCustomerName('');
+      setCustomerPhone('');
+      setOrderNotes('');
+      return;
+    }
+
+    setLastOrder({
+      orderNumber: result.order?.orderNumber,
+      tableNumber: String(tableNumber).trim(),
+      status: result.order?.status || 'pending',
+      createdAt: result.order?.createdAt || new Date().toISOString(),
+      updatedAt: result.order?.createdAt || new Date().toISOString(),
+    });
+
+    setOrderMsg(
+      result.order?.orderNumber
+        ? `Commande ${result.order.orderNumber} envoyee avec succes.`
+        : 'Commande envoyee avec succes.'
+    );
     setCartItems([]);
     setTableNumber('');
     setCustomerName('');
+    setCustomerPhone('');
     setOrderNotes('');
   };
 
@@ -207,20 +273,22 @@ export default function Component() {
       ]);
 
       setSiteSettings(nextSettings);
-      setManagedCoffeeItems(Array.isArray(nextItems) ? nextItems : coffeeItems);
+      setManagedCoffeeItems(
+        (Array.isArray(nextItems) ? nextItems : coffeeItems).map(normalizeClientItem)
+      );
     };
 
-    window.addEventListener('storage', syncAdminConfig);
-    window.addEventListener('focus', syncAdminConfig);
-    window.addEventListener('admin-storage-updated', syncAdminConfig);
+    globalThis.addEventListener('storage', syncAdminConfig);
+    globalThis.addEventListener('focus', syncAdminConfig);
+    globalThis.addEventListener('admin-storage-updated', syncAdminConfig);
 
     // Sync once when page is mounted.
     void syncAdminConfig();
 
     return () => {
-      window.removeEventListener('storage', syncAdminConfig);
-      window.removeEventListener('focus', syncAdminConfig);
-      window.removeEventListener('admin-storage-updated', syncAdminConfig);
+      globalThis.removeEventListener('storage', syncAdminConfig);
+      globalThis.removeEventListener('focus', syncAdminConfig);
+      globalThis.removeEventListener('admin-storage-updated', syncAdminConfig);
     };
   }, []);
 
@@ -242,7 +310,7 @@ export default function Component() {
       return;
     }
 
-    const sharedData = window.AR_SHARED_DATA || {};
+    const sharedData = globalThis.AR_SHARED_DATA || {};
     const fallbackMap = {
       1: 'coffee',
       2: 'latte',
@@ -272,7 +340,7 @@ export default function Component() {
     }
 
     localStorage.setItem('selectedDish', selectedDish);
-    window.location.href = '/ar/ar.html';
+    globalThis.location.href = '/ar/ar.html';
   };
 
   const coffeeItems = [
@@ -293,6 +361,7 @@ export default function Component() {
       prepTime: '4 min',
       badge: '🔥 Trending',
       tags: ['Signature', 'Sweet', 'Creamy'],
+      isAvailable: true,
     },
     {
       id: 2,
@@ -311,6 +380,7 @@ export default function Component() {
       prepTime: '3 min',
       badge: '✨ New',
       tags: ['Vegan', 'Healthy', 'Unique'],
+      isAvailable: true,
     },
     {
       id: 3,
@@ -329,6 +399,7 @@ export default function Component() {
       prepTime: '2 min',
       badge: '⭐ Top Rated',
       tags: ['Strong', 'Bold', 'Premium'],
+      isAvailable: true,
     },
     {
       id: 4,
@@ -347,6 +418,7 @@ export default function Component() {
       prepTime: '5 min',
       badge: '🏆 Award Winner',
       tags: ['Signature', 'Sweet', 'Artisan'],
+      isAvailable: true,
     },
     {
       id: 5,
@@ -365,6 +437,7 @@ export default function Component() {
       prepTime: '4 min',
       badge: '💐 Limited Edition',
       tags: ['Floral', 'Sweet', 'Instagram-Worthy'],
+      isAvailable: true,
     },
     {
       id: 6,
@@ -383,6 +456,7 @@ export default function Component() {
       prepTime: '5 min',
       badge: '💎 Premium',
       tags: ['Rich', 'Chocolate', 'Indulgent'],
+      isAvailable: true,
     },
     {
       id: 7,
@@ -401,6 +475,7 @@ export default function Component() {
       prepTime: '3 min',
       badge: '🍃 Wellness',
       tags: ['Healthy', 'Energizing', 'Vegan'],
+      isAvailable: true,
     },
     {
       id: 8,
@@ -419,11 +494,13 @@ export default function Component() {
       prepTime: '4 min',
       badge: '❄️ Refreshing',
       tags: ['Iced', 'Sweet', 'Popular'],
+      isAvailable: true,
     },
   ];
 
-  const [managedCoffeeItems, setManagedCoffeeItems] = useState(coffeeItems);
-  const effectiveCoffeeItems = managedCoffeeItems.length > 0 ? managedCoffeeItems : coffeeItems;
+  const [managedCoffeeItems, setManagedCoffeeItems] = useState(() => coffeeItems.map(normalizeClientItem));
+  const effectiveCoffeeItems = managedCoffeeItems.length > 0 ? managedCoffeeItems : coffeeItems.map(normalizeClientItem);
+  const menuCoffeeItems = effectiveCoffeeItems.filter((item) => item.isAvailable !== false);
   const cartCount = cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const cartTotal = cartItems.reduce(
     (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
@@ -431,12 +508,44 @@ export default function Component() {
   );
 
   const categories = [
-    { name: 'All', icon: '☕', count: effectiveCoffeeItems.length },
-    { name: 'Trending', icon: '🔥', count: effectiveCoffeeItems.filter((item) => item.isTrending).length },
-    { name: 'New', icon: '✨', count: effectiveCoffeeItems.filter((item) => item.isNew).length },
-    { name: 'Premium', icon: '💎', count: effectiveCoffeeItems.filter((item) => Number(item.price) > 20).length },
-    { name: 'Iced', icon: '❄️', count: effectiveCoffeeItems.filter((item) => String(item.name).toLowerCase().includes('iced')).length },
+    { name: 'All', icon: '☕', count: menuCoffeeItems.length },
+    { name: 'Trending', icon: '🔥', count: menuCoffeeItems.filter((item) => item.isTrending).length },
+    { name: 'New', icon: '✨', count: menuCoffeeItems.filter((item) => item.isNew).length },
+    { name: 'Premium', icon: '💎', count: menuCoffeeItems.filter((item) => Number(item.price) > 20).length },
+    { name: 'Iced', icon: '❄️', count: menuCoffeeItems.filter((item) => String(item.name).toLowerCase().includes('iced')).length },
   ];
+
+  useEffect(() => {
+    const availableIds = new Set(
+      managedCoffeeItems
+        .filter((item) => item.isAvailable !== false)
+        .map((item) => Number(item.id))
+    );
+    setCartItems((prev) => {
+      const next = prev.filter((item) => availableIds.has(Number(item.id)));
+      if (next.length !== prev.length) {
+        setOrderMsg('Certains articles en rupture ont ete retires du panier.');
+        return next;
+      }
+      return prev;
+    });
+  }, [managedCoffeeItems]);
+
+  useEffect(() => {
+    const availableIds = new Set(
+      managedCoffeeItems
+        .filter((item) => item.isAvailable !== false)
+        .map((item) => Number(item.id))
+    );
+
+    setFavorites((prev) => {
+      const next = prev.filter((id) => availableIds.has(Number(id)));
+      if (next.length !== prev.length) {
+        return next;
+      }
+      return prev;
+    });
+  }, [managedCoffeeItems]);
 
   return (
     <div className='w-full min-h-screen bg-[var(--bg-primary)] transition-colors duration-300'>
@@ -912,7 +1021,7 @@ export default function Component() {
       {currentView === 'shop' ? (
         <ShopContent
           isMobile={isMobile}
-          coffeeItems={effectiveCoffeeItems}
+          coffeeItems={menuCoffeeItems}
           categories={categories}
           favorites={favorites}
           toggleFavorite={toggleFavorite}
@@ -925,7 +1034,7 @@ export default function Component() {
       ) : currentView === 'favorites' ? (
         <FavoritesContent
           isMobile={isMobile}
-          coffeeItems={effectiveCoffeeItems}
+          coffeeItems={menuCoffeeItems}
           favorites={favorites}
           toggleFavorite={toggleFavorite}
           clearAllFavorites={clearAllFavorites}
@@ -942,6 +1051,9 @@ export default function Component() {
           setTableNumber={setTableNumber}
           customerName={customerName}
           setCustomerName={setCustomerName}
+          customerPhone={customerPhone}
+          setCustomerPhone={setCustomerPhone}
+          customerPhoneValid={!customerPhone || PHONE_REGEX.test(String(customerPhone || '').trim())}
           orderNotes={orderNotes}
           setOrderNotes={setOrderNotes}
           onIncrement={(id) => updateCartQuantity(id, 1)}
@@ -950,6 +1062,10 @@ export default function Component() {
           onClear={clearCart}
           onConfirm={submitOrder}
           orderMsg={orderMsg}
+          isSubmittingOrder={isSubmittingOrder}
+          tableNumberValid={TABLE_NUMBER_REGEX.test(String(tableNumber || '').trim())}
+          lastOrder={lastOrder}
+          orderStatusLabel={ORDER_STATUS_LABEL}
         />
       ) : currentView === 'about' ? (
         <AboutContent isMobile={isMobile} isDarkMode={isDarkMode} />
@@ -960,7 +1076,7 @@ export default function Component() {
       ) : (
         <ShopContent
           isMobile={isMobile}
-          coffeeItems={effectiveCoffeeItems}
+          coffeeItems={menuCoffeeItems}
           categories={categories}
           favorites={favorites}
           toggleFavorite={toggleFavorite}
@@ -1197,6 +1313,9 @@ function CartContent({
   setTableNumber,
   customerName,
   setCustomerName,
+  customerPhone,
+  setCustomerPhone,
+  customerPhoneValid,
   orderNotes,
   setOrderNotes,
   onIncrement,
@@ -1205,7 +1324,16 @@ function CartContent({
   onClear,
   onConfirm,
   orderMsg,
+  isSubmittingOrder,
+  tableNumberValid,
+  lastOrder,
+  orderStatusLabel,
 }) {
+  const canSubmit = cartItems.length > 0
+    && tableNumberValid
+    && !isSubmittingOrder
+    && customerPhoneValid;
+
   return (
     <div className='w-full min-h-screen bg-[var(--bg-primary)] overflow-x-hidden transition-colors duration-300'>
       <div className='w-full pt-32 sm:pt-36 lg:pt-40 pb-16 sm:pb-24 lg:pb-40'>
@@ -1258,6 +1386,9 @@ function CartContent({
                   onChange={(event) => setTableNumber(event.target.value)}
                   className='w-full bg-transparent border border-white/20 px-4 py-3 text-sm outline-none focus:border-amber-500'
                 />
+                {!tableNumberValid && tableNumber && (
+                  <p className='text-xs text-rose-400'>Format table invalide. Utilisez 1 a 3 chiffres.</p>
+                )}
                 <input
                   type='text'
                   placeholder='Nom client (optionnel)'
@@ -1265,6 +1396,17 @@ function CartContent({
                   onChange={(event) => setCustomerName(event.target.value)}
                   className='w-full bg-transparent border border-white/20 px-4 py-3 text-sm outline-none focus:border-amber-500'
                 />
+                <input
+                  type='tel'
+                  placeholder='Telephone mobile (optionnel)'
+                  value={customerPhone}
+                  onChange={(event) => setCustomerPhone(event.target.value)}
+                  className='w-full bg-transparent border border-white/20 px-4 py-3 text-sm outline-none focus:border-amber-500'
+                />
+                {!customerPhoneValid && customerPhone && (
+                  <p className='text-xs text-rose-400'>Telephone invalide (8 a 15 chiffres, + optionnel).</p>
+                )}
+
                 <textarea
                   placeholder='Note commande (optionnel)'
                   value={orderNotes}
@@ -1280,9 +1422,14 @@ function CartContent({
                 <div className='flex gap-3'>
                   <button
                     onClick={onConfirm}
-                    className='flex-1 bg-amber-500 text-black font-semibold py-3 hover:bg-amber-400 transition-colors'
+                    disabled={!canSubmit}
+                    className={`flex-1 font-semibold py-3 transition-colors ${
+                      canSubmit
+                        ? 'bg-amber-500 text-black hover:bg-amber-400'
+                        : 'bg-amber-500/40 text-black/60 cursor-not-allowed'
+                    }`}
                   >
-                    Confirmer commande
+                    {isSubmittingOrder ? 'Envoi en cours...' : 'Confirmer commande'}
                   </button>
                   <button
                     onClick={onClear}
@@ -1293,6 +1440,7 @@ function CartContent({
                 </div>
 
                 {orderMsg && <p className='text-sm text-emerald-400'>{orderMsg}</p>}
+
               </aside>
             </div>
           )}

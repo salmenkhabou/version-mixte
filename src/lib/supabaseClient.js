@@ -8,8 +8,8 @@ const hasSupabaseConfig = Boolean(supabaseUrl && supabaseKey);
 export const supabaseClient = hasSupabaseConfig
   ? createClient(supabaseUrl, supabaseKey, {
       auth: {
-        persistSession: false,
-        autoRefreshToken: false,
+        persistSession: true,
+        autoRefreshToken: true,
       },
     })
   : null;
