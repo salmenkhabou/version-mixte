@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
-import CoffeeShop from './compoents/CoffeeShop'
-import Loader from './compoents/Loader'
-import AdminPanel from './compoents/admin/AdminPanel'
-import CommandePanel from './compoents/commande/CommandePanel'
-import CommandPageErrorBoundary from './compoents/commande/CommandPageErrorBoundary'
-import ErpControlCenter from './compoents/erp/ErpControlCenter'
-import PhaseOneRuntime from './compoents/erp/PhaseOneRuntime'
-import PwaInstallBanner from './compoents/erp/PwaInstallBanner'
+import CoffeeShop from './components/CoffeeShop'
+import Loader from './components/Loader'
+import CommandPageErrorBoundary from './components/commande/CommandPageErrorBoundary'
+import PhaseOneRuntime from './components/erp/PhaseOneRuntime'
+import PwaInstallBanner from './components/erp/PwaInstallBanner'
 import { ADMIN_STORAGE_KEYS, DEFAULT_SITE_SETTINGS, loadSiteSettings } from './utils/adminStorage'
+
+const AdminPanel = lazy(() => import('./components/admin/AdminPanel'))
+const CommandePanel = lazy(() => import('./components/commande/CommandePanel'))
+const ErpControlCenter = lazy(() => import('./components/erp/ErpControlCenter'))
 
 function AppNotice({ label, title, description }) {
   return (
@@ -120,22 +121,30 @@ function App() {
   return (
     <>
       <PhaseOneRuntime />
-      <Routes>
-        <Route path='/chika/super-admin/*' element={<AdminPanel />} />
-        <Route path='/erp-control' element={<ErpControlCenter />} />
-        <Route
-          path='/commandes/manager/*'
-          element={<CommandeRoute interfaceType='manager' siteSettings={siteSettings} />}
-        />
-        <Route
-          path='/commandes/staff/*'
-          element={<CommandeRoute interfaceType='staff' siteSettings={siteSettings} />}
-        />
-        <Route path='/commande' element={<CommandeRoute interfaceType='staff' siteSettings={siteSettings} />} />
-        <Route path='/commande/*' element={<CommandeRoute interfaceType='staff' siteSettings={siteSettings} />} />
-        <Route path='/' element={<ClientSiteRoute siteSettings={siteSettings} />} />
-        <Route path='*' element={<Navigate to='/' replace />} />
-      </Routes>
+      <Suspense
+        fallback={(
+          <div className='min-h-screen bg-black text-white flex items-center justify-center px-6'>
+            <p className='text-sm text-white/70'>Chargement...</p>
+          </div>
+        )}
+      >
+        <Routes>
+          <Route path='/chika/super-admin/*' element={<AdminPanel />} />
+          <Route path='/erp-control' element={<ErpControlCenter />} />
+          <Route
+            path='/commandes/manager/*'
+            element={<CommandeRoute interfaceType='manager' siteSettings={siteSettings} />}
+          />
+          <Route
+            path='/commandes/staff/*'
+            element={<CommandeRoute interfaceType='staff' siteSettings={siteSettings} />}
+          />
+          <Route path='/commande' element={<CommandeRoute interfaceType='staff' siteSettings={siteSettings} />} />
+          <Route path='/commande/*' element={<CommandeRoute interfaceType='staff' siteSettings={siteSettings} />} />
+          <Route path='/' element={<ClientSiteRoute siteSettings={siteSettings} />} />
+          <Route path='*' element={<Navigate to='/' replace />} />
+        </Routes>
+      </Suspense>
       <PwaInstallBanner />
     </>
   )

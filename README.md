@@ -77,6 +77,9 @@ Required values are documented in `.env.example`:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `API_PORT`
 - `API_CORS_ORIGIN`
+- `API_RATE_LIMIT_WINDOW_MS`
+- `API_RATE_LIMIT_MAX`
+- `API_METRICS_ENABLED`
 
 ## Data and Supabase
 
@@ -97,22 +100,26 @@ Required values are documented in `.env.example`:
 - Offline queue for critical actions (including order creation fallback)
 - Background offline sync when connectivity is restored
 - PWA install support (`manifest.webmanifest`, `sw.js`)
+- Offline fallback page at `/offline.html`
 - Push notification bootstrap (permission request + device token registration)
 
 ## Phase 1 API (Non-OTP)
 
 The following non-OTP endpoints are implemented in `server/phase1-api.js`:
 
+- `GET /health`
 - `GET /me/profile`
 - `GET /me/permissions`
 - `GET /branches`
 - `POST /sync/queue`
 - `POST /notifications/register-device`
+- `GET /metrics`
 
 Notes:
 
 - OTP endpoints (`POST /auth/otp/request`, `POST /auth/otp/verify`) are intentionally excluded from this Phase 1 completion.
 - All API routes require a Supabase bearer token in `Authorization: Bearer <token>`.
+- `GET /metrics` is enabled unless `API_METRICS_ENABLED=false`.
 
 ## Phase 2 Inventory Module
 
@@ -170,15 +177,15 @@ Phase 5 covers shift planning, mobile attendance capture, opening and closing ch
 
 ## Testing and CI
 
-- Current unit tests are in `src/utils/orderService.test.js`.
+- Current unit tests are in `src/utils/orderService.test.js` and `src/utils/offlineQueue.test.js`.
 - CI workflow is defined in `.github/workflows/ci.yml` and runs:
-	- dependency install (`npm ci`)
-	- unit tests (`npm run test`)
-	- production build (`npm run build`)
+  - dependency install (`npm ci`)
+  - unit tests (`npm run test`)
+  - production build (`npm run build`)
 
 ## Suggested Next Improvements
 
 - Expand test coverage for checkout and command interfaces
 - Add route-level access guards based on authenticated role
 - Add Supabase Realtime subscriptions for live order updates
-- Reduce component complexity in `src/compoents/CoffeeShop.jsx`
+- Reduce component complexity in `src/components/CoffeeShop.jsx`

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ERP_ACTIONS } from '../../erp/permissions';
 import { useAccess } from '../../contexts/AccessContext';
 import { syncOfflineOrderQueue } from '../../utils/orderService';
+import { supabaseClient } from '../../lib/supabaseClient';
 import {
   getNotificationPermissionState,
   publishServerNotification,
@@ -10,7 +11,12 @@ import {
   requestNotificationPermission,
   showLocalNotification,
 } from '../../utils/notificationService';
-import { getOfflineQueueStats } from '../../utils/offlineQueue';
+import {
+  clearOfflineQueue,
+  getOfflineQueue,
+  getOfflineQueueStats,
+  retryFailedOfflineOperations,
+} from '../../utils/offlineQueue';
 
 const BRANCH_FORM_DEFAULT = {
   id: '',
@@ -18,6 +24,28 @@ const BRANCH_FORM_DEFAULT = {
   name: '',
   timezone: 'Africa/Tunis',
 };
+
+function formatRelativeTime(isoValue) {
+  if (!isoValue) return 'ready';
+  const ts = new Date(isoValue).getTime();
+  if (!Number.isFinite(ts)) return 'ready';
+
+  const diffMs = ts - Date.now();
+  if (diffMs <= 0) return 'ready';
+
+  const seconds = Math.max(1, Math.round(diffMs / 1000));
+  if (seconds < 60) return `in ${seconds}s`;
+
+  const minutes = Math.round(seconds / 60);
+  return `in ${minutes}m`;
+}
+
+function formatTimestamp(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString('fr-FR');
+}
 
 export default function ErpControlCenter() {
   const {
@@ -43,7 +71,13 @@ export default function ErpControlCenter() {
   const [pushTargetUserId, setPushTargetUserId] = useState('');
   const [syncMsg, setSyncMsg] = useState('');
   const [queueStats, setQueueStats] = useState(() => getOfflineQueueStats());
+  const [queueItems, setQueueItems] = useState(() => getOfflineQueue());
+  const [queueActionMsg, setQueueActionMsg] = useState('');
   const [lastSyncMessage, setLastSyncMessage] = useState('');
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditMsg, setAuditMsg] = useState('');
+  const [isOnline, setIsOnline] = useState(() => globalThis.navigator?.onLine !== false);
 
   const canManageBranches = can(ERP_ACTIONS.BRANCH_MANAGE);
   const canSyncOffline = can(ERP_ACTIONS.OFFLINE_SYNC);
@@ -60,6 +94,7 @@ export default function ErpControlCenter() {
   useEffect(() => {
     const refreshQueueState = () => {
       setQueueStats(getOfflineQueueStats());
+      setQueueItems(getOfflineQueue());
     };
 
     globalThis.addEventListener('erp-offline-queue-updated', refreshQueueState);
@@ -67,6 +102,20 @@ export default function ErpControlCenter() {
 
     return () => {
       globalThis.removeEventListener('erp-offline-queue-updated', refreshQueueState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleOnlineChange = () => {
+      setIsOnline(globalThis.navigator?.onLine !== false);
+    };
+
+    globalThis.addEventListener('online', handleOnlineChange);
+    globalThis.addEventListener('offline', handleOnlineChange);
+
+    return () => {
+      globalThis.removeEventListener('online', handleOnlineChange);
+      globalThis.removeEventListener('offline', handleOnlineChange);
     };
   }, []);
 
@@ -136,9 +185,46 @@ export default function ErpControlCenter() {
   const handleSyncOfflineQueue = async () => {
     const result = await syncOfflineOrderQueue();
     setQueueStats(getOfflineQueueStats());
+    setQueueItems(getOfflineQueue());
     setLastSyncMessage(result.message || 'Sync complete.');
     setSyncMsg(`${result.message} Synced: ${result.synced || 0}, failed: ${result.failed || 0}.`);
   };
+
+  const handleRetryFailedQueue = () => {
+    if (!canSyncOffline) {
+      setQueueActionMsg('Permission refusee: sync offline non autorisee.');
+      return;
+    }
+
+    retryFailedOfflineOperations({ resetAttempts: false, immediate: true });
+    setQueueStats(getOfflineQueueStats());
+    setQueueItems(getOfflineQueue());
+    setQueueActionMsg('Operations en echec replanifiees.');
+  };
+
+  const handleClearQueue = () => {
+    if (!canSyncOffline) {
+      setQueueActionMsg('Permission refusee: nettoyage queue non autorise.');
+      return;
+    }
+
+    const confirmed = globalThis.confirm('Vider toutes les operations offline ?');
+    if (!confirmed) return;
+
+    clearOfflineQueue();
+    setQueueStats(getOfflineQueueStats());
+    setQueueItems(getOfflineQueue());
+    setQueueActionMsg('Queue offline videe.');
+  };
+
+  const queuePreview = useMemo(() => {
+    const sorted = [...queueItems].sort((a, b) => {
+      const aTs = new Date(a.createdAt || 0).getTime();
+      const bTs = new Date(b.createdAt || 0).getTime();
+      return bTs - aTs;
+    });
+    return sorted.slice(0, 6);
+  }, [queueItems]);
 
   const handleSendServerPush = async () => {
     if (!canPublishNotifications) {
@@ -174,6 +260,76 @@ export default function ErpControlCenter() {
     setPushBody('');
     setPushTargetUserId('');
   };
+
+  const loadAuditLogs = async () => {
+    if (!supabaseClient) {
+      setAuditMsg('Supabase non configure.');
+      return;
+    }
+
+    if (!profile?.userId) {
+      setAuditMsg('Utilisateur non connecte.');
+      return;
+    }
+
+    setAuditLoading(true);
+    const { data, error } = await supabaseClient
+      .from('audit_logs')
+      .select('id, action, entity_type, entity_id, created_at')
+      .eq('actor_user_id', profile.userId)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    setAuditLoading(false);
+
+    if (error) {
+      setAuditMsg(`Erreur audit: ${error.message}`);
+      return;
+    }
+
+    setAuditLogs(Array.isArray(data) ? data : []);
+    setAuditMsg('');
+  };
+
+  useEffect(() => {
+    void loadAuditLogs();
+  }, [profile?.userId]);
+
+  useEffect(() => {
+    if (!supabaseClient || !profile?.userId) return undefined;
+
+    const channel = supabaseClient
+      .channel(`audit-logs-${profile.userId}-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'audit_logs',
+          filter: `actor_user_id=eq.${profile.userId}`,
+        },
+        (payload) => {
+          const entry = payload?.new;
+          if (!entry?.id) return;
+
+          setAuditLogs((prev) => {
+            if (prev.some((row) => row.id === entry.id)) return prev;
+            const normalized = {
+              id: entry.id,
+              action: entry.action,
+              entity_type: entry.entity_type,
+              entity_id: entry.entity_id,
+              created_at: entry.created_at,
+            };
+            return [normalized, ...prev].slice(0, 20);
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabaseClient.removeChannel(channel);
+    };
+  }, [profile?.userId]);
 
   if (!isReady) {
     return (
@@ -212,6 +368,9 @@ export default function ErpControlCenter() {
           </p>
           <p className='text-xs text-white/60 mt-3'>
             Role: <span className='text-amber-400'>{role}</span> | User: {profile.email || 'guest'}
+          </p>
+          <p className='text-xs text-white/60 mt-1'>
+            Etat connexion: <span className={isOnline ? 'text-emerald-300' : 'text-rose-300'}>{isOnline ? 'En ligne' : 'Hors ligne'}</span>
           </p>
         </header>
 
@@ -305,27 +464,109 @@ export default function ErpControlCenter() {
           </article>
         </section>
 
+        <section className='grid grid-cols-1 gap-4'>
+          <article className='border border-white/10 bg-white/5 p-5'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
+              <h2 className='text-lg font-medium'>Access Audit Log</h2>
+              <button
+                type='button'
+                onClick={() => {
+                  void loadAuditLogs();
+                }}
+                className='px-4 py-2 border border-white/20 text-white/80 hover:bg-white/10 transition-colors text-sm'
+              >
+                Refresh
+              </button>
+            </div>
+            <p className='text-xs text-white/60 mt-2'>Dernieres actions enregistrees pour cet utilisateur.</p>
+
+            {auditLoading && <p className='text-sm text-white/60 mt-3'>Chargement des audits...</p>}
+            {auditMsg && <p className='text-xs text-rose-300 mt-3'>{auditMsg}</p>}
+
+            {!auditLoading && auditLogs.length === 0 && !auditMsg && (
+              <p className='text-xs text-white/55 mt-3'>Aucun audit disponible.</p>
+            )}
+
+            {auditLogs.length > 0 && (
+              <div className='mt-3 space-y-2'>
+                {auditLogs.map((entry) => (
+                  <div key={entry.id} className='border border-white/10 px-3 py-2 text-xs'>
+                    <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
+                      <p className='text-white/85'>{entry.action}</p>
+                      <p className='text-white/50'>{formatTimestamp(entry.created_at)}</p>
+                    </div>
+                    <p className='text-white/55 mt-1'>
+                      {entry.entity_type || 'entity'} {entry.entity_id || ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </article>
+        </section>
+
         <section className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
           <article className='border border-white/10 bg-white/5 p-5'>
             <h2 className='text-lg font-medium mb-2'>Offline Queue</h2>
             <p className='text-sm text-white/65'>
               Total: {queueStats.total} | Pending: {queueStats.pending} | Failed: {queueStats.failed}
             </p>
+            <p className='text-xs text-white/55 mt-1'>
+              Ready: {queueStats.ready} | Blocked: {queueStats.blocked} | Retryable failed: {queueStats.retryableFailed}
+            </p>
             {canSyncOffline ? (
-              <button
-                type='button'
-                onClick={() => {
-                  void handleSyncOfflineQueue();
-                }}
-                className='mt-3 px-4 py-2 border border-sky-500/40 text-sky-300 hover:bg-sky-500/15 transition-colors text-sm'
-              >
-                Sync Offline Queue
-              </button>
+              <div className='mt-3 flex flex-wrap gap-2'>
+                <button
+                  type='button'
+                  onClick={() => {
+                    void handleSyncOfflineQueue();
+                  }}
+                  className='px-4 py-2 border border-sky-500/40 text-sky-300 hover:bg-sky-500/15 transition-colors text-sm'
+                >
+                  Sync Offline Queue
+                </button>
+                <button
+                  type='button'
+                  onClick={handleRetryFailedQueue}
+                  className='px-4 py-2 border border-amber-500/40 text-amber-300 hover:bg-amber-500/15 transition-colors text-sm'
+                >
+                  Retry Failed
+                </button>
+                <button
+                  type='button'
+                  onClick={handleClearQueue}
+                  className='px-4 py-2 border border-rose-500/40 text-rose-300 hover:bg-rose-500/15 transition-colors text-sm'
+                >
+                  Clear Queue
+                </button>
+              </div>
             ) : (
               <p className='text-xs text-rose-300 mt-3'>No permission to trigger sync.</p>
             )}
+            {queueActionMsg && <p className='mt-2 text-xs text-white/70'>{queueActionMsg}</p>}
             {syncMsg && <p className='mt-2 text-xs text-white/70'>{syncMsg}</p>}
             {lastSyncMessage && <p className='mt-1 text-xs text-amber-300'>{lastSyncMessage}</p>}
+
+            {queuePreview.length === 0 ? (
+              <p className='mt-3 text-xs text-white/55'>Queue vide.</p>
+            ) : (
+              <div className='mt-3 space-y-2'>
+                {queuePreview.map((item) => (
+                  <div key={item.id} className='border border-white/10 px-3 py-2 text-xs'>
+                    <div className='flex items-center justify-between text-white/80'>
+                      <p>{item.type || 'operation'}</p>
+                      <p className='uppercase text-[10px] tracking-widest'>{item.status}</p>
+                    </div>
+                    <p className='text-white/55 mt-1'>
+                      Attempts: {item.attempts} | Next: {formatRelativeTime(item.nextAttemptAt)}
+                    </p>
+                    {item.lastError && (
+                      <p className='text-rose-300 mt-1'>{item.lastError}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </article>
 
           <article className='border border-white/10 bg-white/5 p-5'>

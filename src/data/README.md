@@ -103,4 +103,4 @@ Pensez à :
 ---
 
 **Fichier** : `src/data/footballQuestions.json`
-**Utilisé par** : `src/compoents/game/FootballChallengeGame.jsx`
+**Utilisé par** : `src/components/game/FootballChallengeGame.jsx`

@@ -74,6 +74,28 @@ export function AccessProvider({ children }) {
   }, [refreshAccess]);
 
   useEffect(() => {
+    if (!supabaseClient) return undefined;
+
+    const channel = supabaseClient
+      .channel(`erp-branches-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'erp_branches' },
+        () => {
+          void loadBranches().then((nextBranches) => {
+            setBranches(Array.isArray(nextBranches) ? nextBranches : []);
+            setActiveBranchState(getActiveBranchId());
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabaseClient.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
     const syncBranchState = () => {
       setActiveBranchState(getActiveBranchId());
       void loadBranches().then((nextBranches) => {

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'brew-erp-cache-v1';
-const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest'];
+const CACHE_NAME = 'brew-erp-cache-v2';
+const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/offline.html'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -27,7 +27,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html')),
+      fetch(request).catch(() => caches.match('/offline.html')),
     );
     return;
   }
