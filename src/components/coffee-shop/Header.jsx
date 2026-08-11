@@ -7,6 +7,8 @@ import {
   Gamepad2,
   User,
   X,
+  QrCode,
+  Box,
 } from 'lucide-react';
 
 export default function Header({
@@ -22,6 +24,8 @@ export default function Header({
   toggleTheme,
   showGames,
   showOrdersModule,
+  onOpenQRScanner,
+  onOpen3DViewer,
 }) {
   return (
     <>
@@ -36,7 +40,7 @@ export default function Header({
             <div className='flex items-center justify-between'>
 
               {/* Logo - Enhanced */}
-              <div className='flex items-center gap-4 cursor-pointer group'>
+              <div className='flex items-center gap-4 cursor-pointer group' onClick={() => setCurrentView('shop')}>
                 <div className='relative'>
                   <Coffee size={28} className='text-amber-500 group-hover:rotate-12 transition-transform duration-500' strokeWidth={1.5} />
                   <div className='absolute inset-0 bg-amber-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500'></div>
@@ -54,6 +58,13 @@ export default function Header({
               {/* Desktop Navigation - Enhanced */}
               <div className='hidden lg:flex items-center gap-16'>
                 <NavLink label='Menu' view='shop' currentView={currentView} setCurrentView={setCurrentView} isDarkMode={isDarkMode} />
+                <button
+                  onClick={onOpen3DViewer}
+                  className="group text-xs tracking-[0.25em] transition-all duration-500 relative font-light uppercase text-amber-500/90 hover:text-amber-400 flex items-center gap-1.5"
+                >
+                  <Box size={15} />
+                  3D Studio
+                </button>
                 {showGames && (
                   <NavLink label='Games' view='game' currentView={currentView} setCurrentView={setCurrentView} isDarkMode={isDarkMode} />
                 )}
@@ -62,7 +73,17 @@ export default function Header({
               </div>
 
               {/* Right Actions - Enhanced */}
-              <div className='flex items-center gap-8'>
+              <div className='flex items-center gap-6'>
+                {/* QR Scanner Trigger Button */}
+                <button
+                  onClick={onOpenQRScanner}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-light tracking-wider rounded-full border border-amber-500/30 text-amber-400 hover:bg-amber-500 hover:text-black transition-all shadow-sm"
+                  title="Scanner un QR code (Table / Item)"
+                >
+                  <QrCode size={16} />
+                  <span>Scan QR</span>
+                </button>
+
                 {/* Theme Toggle */}
                 <button
                   onClick={toggleTheme}
@@ -130,28 +151,40 @@ export default function Header({
         } backdrop-blur-xl border-b ${isDarkMode ? 'border-white/10' : 'border-black/10'} py-4`}>
           <div className='px-6 flex items-center justify-between'>
             {/* Logo */}
-            <div className='flex items-center gap-3'>
+            <div className='flex items-center gap-3' onClick={() => setCurrentView('shop')}>
               <Coffee size={24} className='text-amber-500' strokeWidth={1.5} />
               <h1 className={`text-xl font-light tracking-[0.25em] ${isDarkMode ? 'text-white' : 'text-black'}`}>
                 BREW
               </h1>
             </div>
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className='p-2 rounded-full transition-all duration-300'
-              aria-label='Toggle theme'
-            >
-              {isDarkMode ? (
-                <Sun size={20} strokeWidth={1.5} className='text-white/60' />
-              ) : (
-                <Moon size={20} strokeWidth={1.5} className='text-gray-600' />
-              )}
-            </button>
+            <div className="flex items-center gap-3">
+              {/* QR Scan Button Mobile */}
+              <button
+                onClick={onOpenQRScanner}
+                className="p-2 rounded-full border border-amber-500/40 text-amber-500 bg-amber-500/10 active:scale-95 transition-transform"
+                aria-label="Scan QR"
+              >
+                <QrCode size={18} />
+              </button>
+
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className='p-2 rounded-full transition-all duration-300'
+                aria-label='Toggle theme'
+              >
+                {isDarkMode ? (
+                  <Sun size={20} strokeWidth={1.5} className='text-white/60' />
+                ) : (
+                  <Moon size={20} strokeWidth={1.5} className='text-gray-600' />
+                )}
+              </button>
+            </div>
           </div>
         </nav>
       )}
+
 
       {/* Bottom Navigation Bar - Mobile Only */}
       {isMobile && (

@@ -308,43 +308,60 @@ export function useCoffeeShop() {
     resetOrderForm();
   };
 
+  const [is3DViewerOpen, setIs3DViewerOpen] = useState(false);
+  const [selected3DDish, setSelected3DDish] = useState(null);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [qrScanMode, setQrScanMode] = useState('general');
+
+  const open3DViewer = (item) => {
+    setSelected3DDish(item || menuCoffeeItems[0]);
+    setIs3DViewerOpen(true);
+  };
+
+  const close3DViewer = () => {
+    setIs3DViewerOpen(false);
+  };
+
+  const openQRScanner = (mode = 'general') => {
+    setQrScanMode(mode);
+    setIsQRScannerOpen(true);
+  };
+
+  const closeQRScanner = () => {
+    setIsQRScannerOpen(false);
+  };
+
+  const handleQRScanResult = (result) => {
+    if (!result) return;
+
+    if (result.type === 'table' && result.tableNumber) {
+      setTableNumber(result.tableNumber);
+      setOrderMsg(`Table N° ${result.tableNumber} identifiee par QR code.`);
+      if (currentView !== 'cart') {
+        setCurrentView('cart');
+      }
+    } else if (result.type === 'item' && result.itemId) {
+      const found = menuCoffeeItems.find(
+        (item) => String(item.id) === String(result.itemId) || item.name.toLowerCase().includes(result.itemId.toLowerCase())
+      );
+      if (found) {
+        open3DViewer(found);
+        setOrderMsg(`3D pour ${found.name} ouvert.`);
+      } else {
+        setOrderMsg(`Code QR scanné: ${result.raw}`);
+      }
+    } else {
+      setOrderMsg(`Code QR scanné: ${result.raw}`);
+    }
+  };
+
   const launchARExperience = async (coffeeId) => {
-    if (!siteSettings.showAR) {
-      alert('AR is currently disabled by admin.');
-      return;
+    const found = menuCoffeeItems.find((item) => Number(item.id) === Number(coffeeId));
+    if (found) {
+      open3DViewer(found);
+    } else {
+      open3DViewer(menuCoffeeItems[0]);
     }
-
-    const sharedData = globalThis.AR_SHARED_DATA || {};
-    const fallbackMap = {
-      1: 'coffee',
-      2: 'latte',
-      3: 'coffee',
-      4: 'latte',
-      5: 'latte',
-      6: 'coffee',
-      7: 'latte',
-      8: 'coffee',
-    };
-    const coffeeToDishMap = sharedData.coffeeToDishMap || fallbackMap;
-    const defaultDishId = sharedData.defaultDishId || 'coffee';
-    const selectedDish = coffeeToDishMap[coffeeId] || defaultDishId;
-
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      alert('Camera not supported on this browser.');
-      return;
-    }
-
-    try {
-      await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-    } catch {
-      alert('Camera permission is required to start AR.');
-      return;
-    }
-
-    localStorage.setItem('selectedDish', selectedDish);
-    globalThis.location.href = '/ar/ar.html';
   };
 
   return {
@@ -382,5 +399,16 @@ export function useCoffeeShop() {
     clearCart,
     submitOrder,
     launchARExperience,
+    is3DViewerOpen,
+    selected3DDish,
+    setSelected3DDish,
+    open3DViewer,
+    close3DViewer,
+    isQRScannerOpen,
+    qrScanMode,
+    openQRScanner,
+    closeQRScanner,
+    handleQRScanResult,
   };
 }
+

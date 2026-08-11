@@ -19,6 +19,7 @@ export default function CartView({
   orderMsg,
   isSubmittingOrder,
   tableNumberValid,
+  onOpenTableQRScanner,
 }) {
   const canSubmit = cartItems.length > 0
     && tableNumberValid
@@ -70,13 +71,25 @@ export default function CartView({
 
               <aside className={`border p-5 sm:p-6 space-y-4 ${isDarkMode ? 'border-white/10 bg-white/5' : 'border-black/10 bg-black/5'}`}>
                 <h2 className='text-xl font-light text-[var(--text-primary)]'>Confirmation</h2>
-                <input
-                  type='text'
-                  placeholder='Numero de table (obligatoire)'
-                  value={tableNumber}
-                  onChange={(event) => setTableNumber(event.target.value)}
-                  className='w-full bg-transparent border border-white/20 px-4 py-3 text-sm outline-none focus:border-amber-500'
-                />
+                <div className="flex gap-2">
+                  <input
+                    type='text'
+                    placeholder='Numero de table (obligatoire)'
+                    value={tableNumber}
+                    onChange={(event) => setTableNumber(event.target.value)}
+                    className='flex-1 bg-transparent border border-white/20 px-4 py-3 text-sm outline-none focus:border-amber-500'
+                  />
+                  {onOpenTableQRScanner && (
+                    <button
+                      type="button"
+                      onClick={onOpenTableQRScanner}
+                      className="px-3 py-3 border border-amber-500/40 text-amber-400 bg-amber-500/10 hover:bg-amber-500 hover:text-black transition-all flex items-center gap-1.5 text-xs font-light tracking-wide whitespace-nowrap rounded-sm"
+                      title="Scan Table QR"
+                    >
+                      📷 Scan QR
+                    </button>
+                  )}
+                </div>
                 {!tableNumberValid && tableNumber && (
                   <p className='text-xs text-rose-400'>Format table invalide. Utilisez 1 a 3 chiffres.</p>
                 )}

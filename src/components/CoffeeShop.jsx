@@ -6,6 +6,8 @@ import CartView from './coffee-shop/CartView';
 import AboutView from './coffee-shop/AboutView';
 import ContactView from './coffee-shop/ContactView';
 import GameView from './coffee-shop/GameView';
+import { ThreeDViewerModal } from './ui/ThreeDViewerModal';
+import { QrScannerModal } from './ui/QrScannerModal';
 import { PHONE_REGEX, TABLE_NUMBER_REGEX } from './coffee-shop/constants';
 
 export default function CoffeeShop() {
@@ -43,6 +45,16 @@ export default function CoffeeShop() {
     clearCart,
     submitOrder,
     launchARExperience,
+    is3DViewerOpen,
+    selected3DDish,
+    setSelected3DDish,
+    open3DViewer,
+    close3DViewer,
+    isQRScannerOpen,
+    qrScanMode,
+    openQRScanner,
+    closeQRScanner,
+    handleQRScanResult,
   } = useCoffeeShop();
 
   const tableNumberValid = TABLE_NUMBER_REGEX.test(String(tableNumber || '').trim());
@@ -63,6 +75,8 @@ export default function CoffeeShop() {
         toggleTheme={toggleTheme}
         showGames={siteSettings.showGames}
         showOrdersModule={siteSettings.showOrdersModule}
+        onOpenQRScanner={() => openQRScanner('general')}
+        onOpen3DViewer={() => open3DViewer(menuCoffeeItems[0])}
       />
 
       {currentView === 'shop' ? (
@@ -111,6 +125,7 @@ export default function CoffeeShop() {
           orderMsg={orderMsg}
           isSubmittingOrder={isSubmittingOrder}
           tableNumberValid={tableNumberValid}
+          onOpenTableQRScanner={() => openQRScanner('table')}
         />
       ) : currentView === 'about' ? (
         <AboutView isMobile={isMobile} isDarkMode={isDarkMode} />
@@ -132,7 +147,27 @@ export default function CoffeeShop() {
           onAddToCart={addToCart}
         />
       )}
+
+      {/* 3D Model Viewer Modal */}
+      <ThreeDViewerModal
+        isOpen={is3DViewerOpen}
+        onClose={close3DViewer}
+        selectedItem={selected3DDish}
+        allItems={menuCoffeeItems}
+        isDarkMode={isDarkMode}
+        onSelectDish={(dish) => setSelected3DDish(dish)}
+      />
+
+      {/* Live QR Code Scanner Modal */}
+      <QrScannerModal
+        isOpen={isQRScannerOpen}
+        onClose={closeQRScanner}
+        onScanSuccess={handleQRScanResult}
+        mode={qrScanMode}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 }
+
 

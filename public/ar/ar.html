@@ -3,107 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>AR View - La Palma</title>
+    <title>AR & 3D View - BREW La Palma</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; background: #000; }
-        .back-button { position: fixed; top: 20px; left: 20px; z-index: 1000; padding: 12px 20px; font-size: 1rem; font-weight: 600; color: #fff; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 25px; text-decoration: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; background: #000; color: #fff; }
+        
+        .header-nav { position: fixed; top: 20px; left: 20px; right: 20px; z-index: 1000; display: flex; justify-content: space-between; items-center: center; pointer-events: none; }
+        .back-button { pointer-events: auto; padding: 10px 18px; font-size: 0.85rem; font-weight: 500; color: #fff; background: rgba(0, 0, 0, 0.7); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 25px; text-decoration: none; backdrop-filter: blur(10px); }
+        .mode-toggle { pointer-events: auto; padding: 10px 18px; font-size: 0.85rem; font-weight: 600; color: #000; background: #f59e0b; border: none; border-radius: 25px; cursor: pointer; shadow: 0 4px 15px rgba(245, 158, 11, 0.4); }
+        
         #ar-ui { position: fixed; bottom: 0; left: 0; right: 0; z-index: 999; pointer-events: none; }
-        .scanning { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #fff; }
+        .scanning { position: fixed; top: 45%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #fff; pointer-events: auto; }
         .scanning.hidden { display: none; }
-        .scan-animation { width: 200px; height: 200px; border: 3px solid transparent; border-top-color: #f39c12; border-right-color: #f39c12; border-radius: 50%; margin: 0 auto 20px; animation: scan-rotate 2s linear infinite; }
+        .scan-animation { width: 180px; height: 180px; border: 3px solid transparent; border-top-color: #f39c12; border-right-color: #f39c12; border-radius: 50%; margin: 0 auto 20px; animation: scan-rotate 2s linear infinite; }
         @keyframes scan-rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .dish-info { background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%); padding: 40px 20px 30px; text-align: center; color: #fff; }
+        
+        .switch-btn { margin-top: 15px; padding: 12px 24px; font-size: 0.9rem; font-weight: 600; color: #fff; background: rgba(245, 158, 11, 0.3); border: 1px solid #f59e0b; border-radius: 30px; cursor: pointer; backdrop-filter: blur(10px); }
+        
+        .dish-info { background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0) 100%); padding: 40px 20px 30px; text-align: center; color: #fff; pointer-events: auto; }
         .dish-info.hidden { display: none; }
-        .dish-info h3 { font-size: 1.5rem; margin-bottom: 8px; }
-        .dish-info p { color: #ccc; font-size: 0.95rem; margin-bottom: 10px; }
-        .dish-info .price { color: #f39c12; font-size: 1.3rem; font-weight: 700; }
+        .dish-info h3 { font-size: 1.5rem; margin-bottom: 6px; font-weight: 300; letter-spacing: 1px; }
+        .dish-info p { color: #aaa; font-size: 0.9rem; margin-bottom: 8px; font-weight: 300; }
+        .dish-info .price { color: #f59e0b; font-size: 1.3rem; font-weight: 700; }
+
+        #studio-3d-view { position: fixed; inset: 0; z-index: 500; background: radial-gradient(circle at center, #1f140e 0%, #050302 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #studio-3d-view.hidden { display: none; }
+
         .a-enter-vr-button, .a-enter-ar-button { display: none !important; }
     </style>
+
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 </head>
 <body>
-    <a href="index.html" class="back-button">← Back to Menu</a>
+    <div class="header-nav">
+        <a href="index.html" class="back-button">← Back to Menu</a>
+        <button id="toggle-view-mode-btn" class="mode-toggle">Switch to 3D Studio</button>
+    </div>
+
+    <!-- Mode 1: MindAR Camera Target View -->
+    <div id="mindar-container">
+        <script>
+            const dishes = {
+                bruschetta: { name: 'Bruschetta', description: 'Toasted bread with fresh tomatoes, basil', price: '$8.99', model: 'day_71_-_1_scan_a_day_-_bruschetta.glb', scale: '0.05 0.05 0.05' },
+                soup: { name: 'Soup of the Day', description: 'Chef\'s daily creation', price: '$7.99', model: 'low_poly_vegetable_soup.glb', scale: '0.08 0.08 0.08' },
+                salad: { name: 'Garden Salad', description: 'Fresh mixed greens', price: '$9.99', model: 'salad.glb', scale: '0.15 0.15 0.15' },
+                calamari: { name: 'Fried Calamari', description: 'Crispy squid rings', price: '$12.99', model: 'the_grove_of_hobe_sound_-_app_-_calamari.glb', scale: '0.05 0.05 0.05' },
+                burger: { name: 'Classic Burger', description: 'Juicy beef patty with cheese', price: '$14.99', model: 'burger.glb', scale: '0.03 0.03 0.03' },
+                pizza: { name: 'Margherita Pizza', description: 'Fresh mozzarella and basil', price: '$16.99', model: 'pizza.glb', scale: '0.15 0.15 0.15' },
+                pasta: { name: 'Spaghetti Carbonara', description: 'Creamy bacon pasta', price: '$15.99', model: 'pasta.glb', scale: '0.08 0.08 0.08' },
+                steak: { name: 'Grilled Ribeye', description: 'Premium 12oz ribeye', price: '$32.99', model: 'steak.glb', scale: '0.15 0.15 0.15' },
+                salmon: { name: 'Grilled Salmon', description: 'Atlantic salmon', price: '$26.99', model: 'grilled_salmon_fish-poly.glb', scale: '0.1 0.1 0.1' },
+                chicken: { name: 'Roasted Chicken', description: 'Half chicken with rosemary', price: '$19.99', model: 'roasted_chicken.glb', scale: '0.08 0.08 0.08' },
+                risotto: { name: 'Mushroom Risotto', description: 'Creamy wild mushroom rice', price: '$18.99', model: 'bario_black_rice_bowl_scaniverse_lidar.glb', scale: '0.03 0.03 0.03' },
+                lasagna: { name: 'Beef Lasagna', description: 'Layers of pasta and beef', price: '$17.99', model: 'lasagna.glb', scale: '0.08 0.08 0.08' },
+                dessert: { name: 'Chocolate Lava Cake', description: 'Warm molten chocolate', price: '$9.99', model: 'desserts.glb', scale: '0.12 0.12 0.12' },
+                tiramisu: { name: 'Tiramisu', description: 'Classic Italian dessert', price: '$8.99', model: 'tiramisu.glb', scale: '0.08 0.08 0.08' },
+                cheesecake: { name: 'New York Cheesecake', description: 'Creamy with berries', price: '$9.99', model: 'cheesecake.glb', scale: '0.03 0.03 0.03' },
+                icecream: { name: 'Gelato Selection', description: 'Artisan Italian gelato', price: '$7.99', model: 'gelato.glb', scale: '0.03 0.03 0.03' },
+                coffee: { name: 'Espresso', description: 'Rich Italian espresso', price: '$3.99', model: 'caffe_latte_espresso_bitter.glb', scale: '0.08 0.08 0.08' },
+                latte: { name: 'Caffè Latte', description: 'Espresso with milk', price: '$5.99', model: 'caffe_latte_cup.glb', scale: '0.15 0.15 0.15' },
+            };
+
+            const selectedId = localStorage.getItem('selectedDish') || 'burger';
+            const dish = dishes[selectedId] || dishes.burger;
+
+            document.write(`
+                <a-scene
+                    mindar-image="imageTargetSrc: ./targets/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: no;"
+                    color-space="sRGB"
+                    renderer="colorManagement: true; physicallyCorrectLights: true;"
+                    vr-mode-ui="enabled: false"
+                    device-orientation-permission-ui="enabled: false"
+                >
+                    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+                    <a-entity mindar-image-target="targetIndex: 0">
+                        <a-gltf-model
+                            id="dish-model"
+                            src="./models/${dish.model}"
+                            position="0 0.05 0"
+                            scale="${dish.scale}"
+                            rotation="0 0 0"
+                            animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear"
+                        ></a-gltf-model>
+                    </a-entity>
+                </a-scene>
+
+                <div id="ar-ui">
+                    <div id="scanning-indicator" class="scanning">
+                        <div class="scan-animation"></div>
+                        <p>Point camera at the menu marker</p>
+                        <button id="direct-3d-btn" class="switch-btn">👆 Open 3D Interactive Studio</button>
+                    </div>
+                    <div id="dish-info" class="dish-info hidden">
+                        <h3>${dish.name}</h3>
+                        <p>${dish.description}</p>
+                        <p class="price">${dish.price}</p>
+                    </div>
+                </div>
+            `);
+        </script>
+    </div>
+
+    <!-- Mode 2: Interactive WebGL 3D Studio Viewer -->
+    <div id="studio-3d-view" class="hidden">
+        <model-viewer
+            id="standalone-model-viewer"
+            alt="3D Dish Model"
+            ar
+            ar-modes="webxr scene-viewer quicklook"
+            camera-controls
+            touch-action="pan-y"
+            auto-rotate
+            shadow-intensity="1.5"
+            exposure="1.2"
+            style="width: 100%; height: 100%;"
+        ></model-viewer>
+    </div>
 
     <script>
-        // Dish data
-        const dishes = {
-            bruschetta: { name: 'Bruschetta', description: 'Toasted bread with fresh tomatoes, basil', price: '$8.99', model: 'day_71_-_1_scan_a_day_-_bruschetta.glb', scale: '0.05 0.05 0.05' },
-            soup: { name: 'Soup of the Day', description: 'Chef\'s daily creation', price: '$7.99', model: 'low_poly_vegetable_soup.glb', scale: '0.08 0.08 0.08' },
-            salad: { name: 'Garden Salad', description: 'Fresh mixed greens', price: '$9.99', model: 'salad.glb', scale: '0.15 0.15 0.15' },
-            calamari: { name: 'Fried Calamari', description: 'Crispy squid rings', price: '$12.99', model: 'the_grove_of_hobe_sound_-_app_-_calamari.glb', scale: '0.05 0.05 0.05' },
-            burger: { name: 'Classic Burger', description: 'Juicy beef patty with cheese', price: '$14.99', model: 'burger.glb', scale: '0.03 0.03 0.03' },
-            pizza: { name: 'Margherita Pizza', description: 'Fresh mozzarella and basil', price: '$16.99', model: 'pizza.glb', scale: '0.15 0.15 0.15' },
-            pasta: { name: 'Spaghetti Carbonara', description: 'Creamy bacon pasta', price: '$15.99', model: 'pasta.glb', scale: '0.08 0.08 0.08' },
-            steak: { name: 'Grilled Ribeye', description: 'Premium 12oz ribeye', price: '$32.99', model: 'steak.glb', scale: '0.15 0.15 0.15' },
-            salmon: { name: 'Grilled Salmon', description: 'Atlantic salmon', price: '$26.99', model: 'grilled_salmon_fish-poly.glb', scale: '0.1 0.1 0.1' },
-            chicken: { name: 'Roasted Chicken', description: 'Half chicken with rosemary', price: '$19.99', model: 'roasted_chicken.glb', scale: '0.08 0.08 0.08' },
-            risotto: { name: 'Mushroom Risotto', description: 'Creamy wild mushroom rice', price: '$18.99', model: 'bario_black_rice_bowl_scaniverse_lidar.glb', scale: '0.03 0.03 0.03' },
-            lasagna: { name: 'Beef Lasagna', description: 'Layers of pasta and beef', price: '$17.99', model: 'lasagna.glb', scale: '0.08 0.08 0.08' },
-            dessert: { name: 'Chocolate Lava Cake', description: 'Warm molten chocolate', price: '$9.99', model: 'desserts.glb', scale: '0.12 0.12 0.12' },
-            tiramisu: { name: 'Tiramisu', description: 'Classic Italian dessert', price: '$8.99', model: 'tiramisu.glb', scale: '0.08 0.08 0.08' },
-            cheesecake: { name: 'New York Cheesecake', description: 'Creamy with berries', price: '$9.99', model: 'cheesecake.glb', scale: '0.03 0.03 0.03' },
-            icecream: { name: 'Gelato Selection', description: 'Artisan Italian gelato', price: '$7.99', model: 'gelato.glb', scale: '0.03 0.03 0.03' },
-            coffee: { name: 'Espresso', description: 'Rich Italian espresso', price: '$3.99', model: 'caffe_latte_espresso_bitter.glb', scale: '0.08 0.08 0.08' },
-            latte: { name: 'Caffè Latte', description: 'Espresso with milk', price: '$5.99', model: 'caffe_latte_cup.glb', scale: '0.15 0.15 0.15' },
-            wine: { name: 'House Wine', description: 'Red or white wine', price: '$8.99', model: 'cocktail_martini.glb', scale: '0.15 0.15 0.15' },
-            cocktail: { name: 'Signature Cocktail', description: 'Today\'s special', price: '$12.99', model: 'cocktail_martini.glb', scale: '0.15 0.15 0.15' },
-            lemonade: { name: 'Fresh Lemonade', description: 'Homemade with mint', price: '$4.99', model: 'homemade_lemonade.glb', scale: '0.15 0.15 0.15' }
-        };
-
-        const selectedId = localStorage.getItem('selectedDish') || 'burger';
-        const dish = dishes[selectedId] || dishes.burger;
-
-        // Write the scene HTML directly with the correct model
-        document.write(`
-            <a-scene
-                mindar-image="imageTargetSrc: ./targets/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: no;"
-                color-space="sRGB"
-                renderer="colorManagement: true; physicallyCorrectLights: true;"
-                vr-mode-ui="enabled: false"
-                device-orientation-permission-ui="enabled: false"
-            >
-                <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-                <a-entity mindar-image-target="targetIndex: 0">
-                    <a-gltf-model
-                        id="dish-model"
-                        src="./models/${dish.model}"
-                        position="0 0.05 0"
-                        scale="${dish.scale}"
-                        rotation="0 0 0"
-                        animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear"
-                    ></a-gltf-model>
-                </a-entity>
-            </a-scene>
-
-            <div id="ar-ui">
-                <div id="scanning-indicator" class="scanning">
-                    <div class="scan-animation"></div>
-                    <p>Point camera at the menu marker</p>
-                </div>
-                <div id="dish-info" class="dish-info hidden">
-                    <h3>${dish.name}</h3>
-                    <p>${dish.description}</p>
-                    <p class="price">${dish.price}</p>
-                </div>
-            </div>
-        `);
-
-        // Handle target events after DOM ready
         window.addEventListener('DOMContentLoaded', () => {
             const target = document.querySelector('[mindar-image-target]');
             const scanning = document.getElementById('scanning-indicator');
             const dishInfo = document.getElementById('dish-info');
+            const toggleModeBtn = document.getElementById('toggle-view-mode-btn');
+            const direct3dBtn = document.getElementById('direct-3d-btn');
+            const studioView = document.getElementById('studio-3d-view');
+            const standaloneViewer = document.getElementById('standalone-model-viewer');
             
+            const selectedId = localStorage.getItem('selectedDish') || 'burger';
+            const currentDish = dishes[selectedId] || dishes.burger;
+            
+            if (standaloneViewer) {
+                standaloneViewer.src = `./models/${currentDish.model}`;
+            }
+
+            let isStudioMode = false;
+
+            function switchToStudio() {
+                isStudioMode = true;
+                studioView.classList.remove('hidden');
+                toggleModeBtn.textContent = 'Switch to Marker AR';
+                scanning.classList.add('hidden');
+            }
+
+            function switchToMarkerAR() {
+                isStudioMode = false;
+                studioView.classList.add('hidden');
+                toggleModeBtn.textContent = 'Switch to 3D Studio';
+                scanning.classList.remove('hidden');
+            }
+
+            if (toggleModeBtn) {
+                toggleModeBtn.addEventListener('click', () => {
+                    if (isStudioMode) switchToMarkerAR();
+                    else switchToStudio();
+                });
+            }
+
+            if (direct3dBtn) {
+                direct3dBtn.addEventListener('click', switchToStudio);
+            }
+
             if (target) {
                 target.addEventListener('targetFound', () => {
-                    scanning.classList.add('hidden');
-                    dishInfo.classList.remove('hidden');
+                    if (!isStudioMode) {
+                        scanning.classList.add('hidden');
+                        dishInfo.classList.remove('hidden');
+                    }
                 });
                 target.addEventListener('targetLost', () => {
-                    scanning.classList.remove('hidden');
-                    dishInfo.classList.add('hidden');
+                    if (!isStudioMode) {
+                        scanning.classList.remove('hidden');
+                        dishInfo.classList.add('hidden');
+                    }
                 });
             }
         });
